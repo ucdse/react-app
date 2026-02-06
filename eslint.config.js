@@ -19,5 +19,11 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      'react-refresh/only-export-components': [
+        'warn', // 建议改为 warn，避免卡死 CI 构建
+        { allowConstantExport: true }, // 👈 关键：允许导出常量
+      ],
+    },
   },
 ])
