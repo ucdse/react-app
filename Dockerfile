@@ -24,8 +24,10 @@ ENV BACKEND_PORT=5000
 # 复制构建产物到 nginx 目录
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# 复制 nginx 模板（由官方 entrypoint 自动 envsubst 到 conf.d）
-COPY nginx.conf /etc/nginx/templates/default.conf.template
+# 复制 nginx 模板与自定义入口脚本
+COPY nginx.conf /etc/nginx/default.conf.template
+COPY docker-entrypoint.d/40-envsubst-backend.sh /docker-entrypoint.d/40-envsubst-backend.sh
+RUN chmod +x /docker-entrypoint.d/40-envsubst-backend.sh
 
 # 暴露端口
 EXPOSE 80
