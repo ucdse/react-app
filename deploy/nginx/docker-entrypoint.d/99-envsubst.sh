@@ -12,5 +12,5 @@ if [ -z "${BACKEND_PORT:-}" ]; then
 fi
 
 envsubst '${BACKEND_HOST} ${BACKEND_PORT}' \
-  < /etc/nginx/default.conf.template \
+  < /etc/nginx/templates/default.conf.template \
   > /etc/nginx/conf.d/default.conf

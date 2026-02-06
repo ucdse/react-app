@@ -1,5 +1,5 @@
 # 构建阶段
-FROM node:24-slim AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -16,7 +16,9 @@ COPY . .
 RUN npm run build
 
 # 运行阶段
-FROM nginx:alpine
+FROM nginx:1.25-alpine
+
+RUN apk add --no-cache gettext
 
 ENV BACKEND_HOST=flask-app
 ENV BACKEND_PORT=5000
@@ -24,10 +26,10 @@ ENV BACKEND_PORT=5000
 # 复制构建产物到 nginx 目录
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# 复制 nginx 模板与自定义入口脚本
-COPY nginx.conf /etc/nginx/default.conf.template
-COPY docker-entrypoint.d/40-envsubst-backend.sh /docker-entrypoint.d/40-envsubst-backend.sh
-RUN chmod +x /docker-entrypoint.d/40-envsubst-backend.sh
+# 复制 nginx 模板与自定义入口脚本（参考 firmament-take-out-admin）
+COPY deploy/nginx/admin.conf.tpl /etc/nginx/templates/default.conf.template
+COPY deploy/nginx/docker-entrypoint.d/99-envsubst.sh /docker-entrypoint.d/99-envsubst.sh
+RUN chmod +x /docker-entrypoint.d/99-envsubst.sh
 
 # 暴露端口
 EXPOSE 80
