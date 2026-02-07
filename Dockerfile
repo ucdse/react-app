@@ -9,11 +9,11 @@ COPY package.json package-lock.json ./
 # 安装依赖
 RUN npm ci
 
-# 复制源代码
+# 复制源代码（.env 由 Jenkins 通过 build secret 注入，不放入镜像）
 COPY . .
 
-# 构建应用
-RUN npm run build
+# 构建应用：env 以 secret 挂载，仅构建时可见，不写入镜像层
+RUN --mount=type=secret,id=env,target=/app/.env npm run build
 
 # 运行阶段
 FROM nginx:1.25-alpine
