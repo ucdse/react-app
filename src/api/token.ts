@@ -9,18 +9,34 @@ interface AuthTokenPayload {
   refreshToken?: string
 }
 
-export const getAccessToken = (): string | null => localStorage.getItem(ACCESS_TOKEN_KEY)
+/**
+ * 统一读取 localStorage，避免在非浏览器环境下直接访问 window 报错。
+ */
+const getStorage = (): Storage | null => (typeof window === 'undefined' ? null : window.localStorage)
 
-export const getRefreshToken = (): string | null => localStorage.getItem(REFRESH_TOKEN_KEY)
+export const getAccessToken = (): string | null =>
+  getStorage()?.getItem(ACCESS_TOKEN_KEY) ?? null
 
-export const setAuthTokens = ({ accessToken, refreshToken }: AuthTokenPayload): void => {
-  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
+export const getRefreshToken = (): string | null =>
+  getStorage()?.getItem(REFRESH_TOKEN_KEY) ?? null
+
+export const setAuthTokens = ({
+  accessToken,
+  refreshToken,
+}: AuthTokenPayload): void => {
+  const storage = getStorage()
+  if (!storage) return
+
+  storage.setItem(ACCESS_TOKEN_KEY, accessToken)
   if (refreshToken) {
-    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
+    storage.setItem(REFRESH_TOKEN_KEY, refreshToken)
   }
 }
 
 export const clearAuthTokens = (): void => {
-  localStorage.removeItem(ACCESS_TOKEN_KEY)
-  localStorage.removeItem(REFRESH_TOKEN_KEY)
+  const storage = getStorage()
+  if (!storage) return
+
+  storage.removeItem(ACCESS_TOKEN_KEY)
+  storage.removeItem(REFRESH_TOKEN_KEY)
 }

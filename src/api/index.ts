@@ -1,5 +1,9 @@
 /**
- * API 层统一入口：request 实例、鉴权 client、各业务模块及 DTO/VO。
+ * API 层统一出口：
+ * - axios 客户端（request / axiosWithAuth）
+ * - token 工具
+ * - 业务 API（auth / user 模块）
+ * - 通用响应类型
  */
 export { default as request } from './request'
 export { axiosWithAuth } from './client'
@@ -9,15 +13,17 @@ export {
   getAccessToken,
   clearAuthTokens,
 } from './token'
-export type { ApiResult } from './response'
+export type { ApiResult } from './request'
 export {
   userLoginAPI,
   userRegisterAPI,
-  getMeAPI,
-  userLogoutAPI,
   type UserLoginDTO,
   type UserLoginVO,
   type UserRegisterDTO,
   type UserRegisterVO,
+} from './auth'
+export {
+  getMeAPI,
+  userLogoutAPI,
   type UserProfileVO,
 } from './user'
