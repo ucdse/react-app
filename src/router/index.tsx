@@ -3,6 +3,7 @@ import Layout from '@/components/Layout'
 import Activate from '@/pages/Activate/Activate'
 import Home from '@/pages/Home/Home'
 import Login from '@/pages/Login/Login'
+import Maps from '@/pages/Maps/Maps'
 import Profile from '@/pages/Profile/Profile'
 import Register from '@/pages/Register/Register'
 import VerifyEmail from '@/pages/VerifyEmail/VerifyEmail'
@@ -35,6 +36,10 @@ export const router = createBrowserRouter([
       {
         path: 'profile',
         element: <Profile />,
+      },
+      {
+        path: 'maps',
+        element: <Maps />,
       },
     ],
   },

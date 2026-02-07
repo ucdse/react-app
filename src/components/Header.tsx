@@ -81,6 +81,9 @@ export default function Header() {
             <Link to="/news" className={navLinkClasses('/news')}>
               News
             </Link>
+            <Link to="/maps" className={navLinkClasses('/maps')}>
+              Maps
+            </Link>
           </div>
 
           {/* Auth Actions */}
