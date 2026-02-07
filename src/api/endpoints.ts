@@ -8,6 +8,9 @@ const USER_API_PREFIX = '/api/users'
 export const USER_ENDPOINTS = {
   login: `${USER_API_PREFIX}/login`,
   register: `${USER_API_PREFIX}/register`,
+  sendVerificationCode: `${USER_API_PREFIX}/send-verification-code`,
+  activate: `${USER_API_PREFIX}/activate`,
+  activateByToken: `${USER_API_PREFIX}/activate-by-token`,
   me: `${USER_API_PREFIX}/me`,
   refresh: `${USER_API_PREFIX}/refresh`,
   logout: `${USER_API_PREFIX}/logout`,

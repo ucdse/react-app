@@ -17,6 +17,9 @@ export type { ApiResult } from './request'
 export {
   userLoginAPI,
   userRegisterAPI,
+  sendVerificationCodeAPI,
+  activateAccountAPI,
+  activateByTokenAPI,
   type UserLoginDTO,
   type UserLoginVO,
   type UserRegisterDTO,

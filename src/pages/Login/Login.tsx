@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { userLoginAPI, ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from '@/api'
 import { toast } from 'sonner'
 
+const UNACTIVATED_MESSAGE = 'account is disabled'
+
 export default function Login() {
   const navigate = useNavigate()
   const [identifier, setIdentifier] = useState('')
@@ -21,7 +23,13 @@ export default function Login() {
       toast.success('Signed in successfully.')
       navigate('/profile', { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Network error')
+      const msg = err instanceof Error ? err.message : 'Network error'
+      if (msg.toLowerCase().includes(UNACTIVATED_MESSAGE) || msg.toLowerCase().includes('disabled')) {
+        toast.info('Account needs to be activated.')
+        navigate('/verify-email', { state: { identifier: identifier.trim() }, replace: true })
+      } else {
+        setError(msg)
+      }
     } finally {
       setLoading(false)
     }

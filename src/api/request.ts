@@ -26,11 +26,17 @@ const refreshClient = createHttpClient()
 /** 业务请求统一实例（全局使用） */
 const request: AxiosInstance = createHttpClient()
 
-const LOGIN_EXPIRED_MESSAGE = '登录已过期，请重新登录'
-const LOGIN_REDIRECT_TOAST = '登录过期，正在跳转到登录页'
-const NETWORK_ERROR_MESSAGE = '网络异常'
+const LOGIN_EXPIRED_MESSAGE = 'Session expired. Please sign in again.'
+const LOGIN_REDIRECT_TOAST = 'Session expired. Redirecting to sign in.'
+const NETWORK_ERROR_MESSAGE = 'Network error'
 const LOGIN_PATH = '/login'
-const AUTH_EXEMPT_ENDPOINTS = [USER_ENDPOINTS.login, USER_ENDPOINTS.register]
+const AUTH_EXEMPT_ENDPOINTS = [
+  USER_ENDPOINTS.login,
+  USER_ENDPOINTS.register,
+  USER_ENDPOINTS.sendVerificationCode,
+  USER_ENDPOINTS.activate,
+  USER_ENDPOINTS.activateByToken,
+]
 
 /** 后端统一响应格式 */
 export interface ApiResult<T = unknown> {
@@ -41,7 +47,7 @@ export interface ApiResult<T = unknown> {
 
 /** 兼容后端历史约定：0/1 均视为成功 */
 const SUCCESS_CODES = new Set([0, 1])
-const DEFAULT_UNWRAP_MESSAGE = '操作失败'
+const DEFAULT_UNWRAP_MESSAGE = 'Request failed'
 
 const isApiSuccessCode = (code: number | undefined): boolean => (code != null ? SUCCESS_CODES.has(code) : false)
 
@@ -69,7 +75,7 @@ const extractErrorMessage = (error: unknown, fallbackMessage = NETWORK_ERROR_MES
       return data.msg
     }
     if (!error.response && error.request) {
-      return '请求已发出，但未收到后端响应（请检查服务或代理）'
+      return 'Request sent but no response received. Please check the server or proxy.'
     }
     if (error.message) {
       return error.message
@@ -149,7 +155,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
     const { data } = await refreshClient.post<ApiResult<RefreshTokenVO>>(USER_ENDPOINTS.refresh, {
       refresh_token: refreshToken,
     })
-    const result = unwrapApiResult(data, '登录状态已过期')
+    const result = unwrapApiResult(data, 'Session expired.')
     setAuthTokens({
       accessToken: result.access_token,
       refreshToken: result.refresh_token,
