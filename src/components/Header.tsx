@@ -37,56 +37,56 @@ export default function Header() {
     )
 
   return (
-    <header className="fixed top-4 left-4 right-4 z-50">
-      <nav className="glass mx-auto max-w-6xl rounded-2xl px-6 py-3">
-        <div className="flex items-center justify-between">
-          {/* Logo & Brand */}
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-xl font-bold text-gray-900 transition-opacity hover:opacity-80"
-          >
-            <svg
-              className="h-8 w-8"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
+    <header className="fixed top-4 left-4 right-4 z-50 flex justify-center">
+      <nav className="mx-auto flex items-center bg-white/90 backdrop-blur-sm shadow-lg rounded-full px-8 py-3 min-w-[56rem] sm:min-w-[72rem] w-max max-w-[90rem]">
+        <div className="flex items-center justify-between w-full">
+          {/* 左侧：Logo + News + Maps */}
+          <div className="flex items-center gap-4">
+            <Link
+              to="/"
+              className="flex items-center gap-2 text-xl font-bold text-gray-900 transition-opacity hover:opacity-80"
             >
-              <path
-                d="M12 2L2 7L12 12L22 7L12 2Z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M2 17L12 22L22 17"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M2 12L12 17L22 12"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span className="hidden sm:inline">UCDSE</span>
-          </Link>
-
-          {/* Navigation Links */}
-          <div className="flex items-center gap-1">
-            <Link to="/news" className={navLinkClasses('/news')}>
-              News
+              <svg
+                className="h-8 w-8"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 2L2 7L12 12L22 7L12 2Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M2 17L12 22L22 17"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M2 12L12 17L22 12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className="hidden sm:inline">UCDSE</span>
             </Link>
-            <Link to="/maps" className={navLinkClasses('/maps')}>
-              Maps
-            </Link>
+            <div className="flex items-center gap-1">
+              <Link to="/news" className={navLinkClasses('/news')}>
+                News
+              </Link>
+              <Link to="/maps" className={navLinkClasses('/maps')}>
+                Maps
+              </Link>
+            </div>
           </div>
 
-          {/* Auth Actions */}
+          {/* 右侧：Sign in / Get started 或 Profile / Log out */}
           <div className="flex items-center gap-2">
             {isLoggedIn ? (
               <>
