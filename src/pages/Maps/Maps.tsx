@@ -72,8 +72,10 @@ export default function Maps() {
 
   useEffect(() => {
     let cancelled = false
-    setStationsLoading(true)
-    setStationsError(null)
+    queueMicrotask(() => {
+      setStationsLoading(true)
+      setStationsError(null)
+    })
     getStationsAPI()
       .then((data) => {
         if (!cancelled) setStations(data)
@@ -92,8 +94,10 @@ export default function Maps() {
   /** 进入页面时自动定位到用户所在位置 */
   useEffect(() => {
     if (!navigator.geolocation) return
-    setLocationError(null)
-    setLocationLoading(true)
+    queueMicrotask(() => {
+      setLocationError(null)
+      setLocationLoading(true)
+    })
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setUserPosition({
