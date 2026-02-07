@@ -98,9 +98,11 @@ spec:
                             credentialsId: env.DOCKER_CREDENTIALS_ID,
                             usernameVariable: 'DOCKER_USER',
                             passwordVariable: 'DOCKER_PASS'
-                        )
+                        ),
+                        file(credentialsId: env.ENV_FILE_CREDENTIALS_ID, variable: 'ENV_FILE')
                     ]) {
                         sh '''
+                        cp "${ENV_FILE}" .env
                         echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
                         docker build -t ${FULL_IMAGE} .
                         if [ "${PUSH_IMAGE}" = "true" ] || [ "${DEPLOY_TO_EC2}" = "true" ]; then
