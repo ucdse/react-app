@@ -38,7 +38,7 @@ export default function Header() {
 
   return (
     <header className="fixed top-4 left-4 right-4 z-50 flex justify-center">
-      <nav className="mx-auto flex items-center bg-white/90 backdrop-blur-sm shadow-lg rounded-full px-8 py-3 min-w-[56rem] sm:min-w-[72rem] w-max max-w-[90rem]">
+      <nav className="mx-auto flex items-center bg-white/90 backdrop-blur-sm shadow-lg rounded-full px-4 py-3 w-max max-w-full sm:px-6 md:px-8 md:max-w-6xl lg:min-w-[56rem] lg:max-w-[120rem] xl:min-w-[72rem] xl:max-w-[180rem]">
         <div className="flex items-center justify-between w-full">
           {/* 左侧：Logo + News + Maps */}
           <div className="flex items-center gap-4">
