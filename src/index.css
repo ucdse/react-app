@@ -64,6 +64,10 @@
   * {
     border-color: hsl(var(--border));
   }
+  html {
+    /* 始终为滚动条预留空间，避免有/无滚动条时 Header 位置在页面间偏移 */
+    scrollbar-gutter: stable;
+  }
   body {
     font-family: 'Open Sans', system-ui, sans-serif;
     background-color: hsl(var(--background));

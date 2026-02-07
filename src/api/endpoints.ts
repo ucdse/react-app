@@ -3,6 +3,7 @@
  * 注意：这里只维护「路径」，不包含域名与协议。
  */
 const USER_API_PREFIX = '/api/users'
+const STATION_API_PREFIX = '/api/stations'
 
 /** 用户模块接口路径 */
 export const USER_ENDPOINTS = {
@@ -14,4 +15,9 @@ export const USER_ENDPOINTS = {
   me: `${USER_API_PREFIX}/me`,
   refresh: `${USER_API_PREFIX}/refresh`,
   logout: `${USER_API_PREFIX}/logout`,
+} as const
+
+/** 站点模块接口路径 */
+export const STATION_ENDPOINTS = {
+  list: `${STATION_API_PREFIX}/`,
 } as const

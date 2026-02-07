@@ -6,7 +6,7 @@ import axios, {
 } from 'axios'
 import { toast } from 'sonner'
 import { API_BASE_URL } from '@/config'
-import { USER_ENDPOINTS } from './endpoints'
+import { STATION_ENDPOINTS, USER_ENDPOINTS } from './endpoints'
 import { clearAuthTokens, getAccessToken, getRefreshToken, setAuthTokens } from './token'
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
@@ -36,6 +36,7 @@ const AUTH_EXEMPT_ENDPOINTS = [
   USER_ENDPOINTS.sendVerificationCode,
   USER_ENDPOINTS.activate,
   USER_ENDPOINTS.activateByToken,
+  STATION_ENDPOINTS.list,
 ]
 
 /** 后端统一响应格式 */
