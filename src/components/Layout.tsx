@@ -4,7 +4,7 @@ import Footer from './Footer'
 
 export default function Layout() {
   const { pathname } = useLocation()
-  const isMapsPage = pathname === '/maps'
+  const isMapsPage : boolean = pathname === '/maps'
 
   return (
     <div

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { getStationsAPI, type StationVO } from '@/api/station'
 
+// ========== Google Maps API 相关常量 ==========
+/** 全局回调名，供 Google Maps 脚本加载完成后调用 */
 const GOOGLE_MAPS_CALLBACK = '__googleMapsCallback'
 const DEFAULT_CENTER = '40.12150192260742,-100.45039367675781'
 const DEFAULT_ZOOM = 4
@@ -48,6 +50,12 @@ export default function Maps() {
       : null
   const error = keyError ?? loadError
 
+  /**
+   * 【调用 Google Maps API】加载 Google Maps JavaScript SDK
+   * - 通过动态插入 <script> 标签请求：https://maps.googleapis.com/maps/api/js
+   * - 使用 key、callback、libraries=maps,marker、v=beta 等参数
+   * - 加载成功后执行全局 callback，将 scriptLoaded 置为 true，从而触发地图渲染
+   */
   useEffect(() => {
     if (keyError) return
 
@@ -114,6 +122,14 @@ export default function Maps() {
     )
   }, [])
 
+  /**
+   * 【地图渲染】在 Google Maps SDK 加载完成且容器存在时，创建并挂载地图
+   * 渲染流程：
+   * 1. 使用 Google 提供的 Web Component：document.createElement('gmp-map')，由 SDK 注册的 <gmp-map> 会内部调用 Maps JavaScript API 渲染地图瓦片
+   * 2. 设置 center、zoom、map-id 等属性，决定地图中心与缩放级别
+   * 3. 创建 gmp-advanced-marker 标记（用户位置 + 站点），append 到 gmp-map 上
+   * 4. 将 gmpMap 挂载到 ref 对应的 div（mapContainerRef），地图即显示在页面上
+   */
   useEffect(() => {
     if (!scriptLoaded || !mapContainerRef.current) return
 
@@ -125,6 +141,7 @@ export default function Maps() {
       : DEFAULT_CENTER
     const zoom = userPosition ? USER_ZOOM : DEFAULT_ZOOM
 
+    /* 创建地图根节点：<gmp-map> 由 Google Maps JS SDK 注册，挂载后由 SDK 负责请求并渲染地图底图 */
     const gmpMap = document.createElement('gmp-map')
     gmpMap.setAttribute('center', center)
     gmpMap.setAttribute('zoom', String(zoom))
@@ -185,6 +202,7 @@ export default function Maps() {
       if (activeMarker === marker) activeMarker = null
     }
 
+    /* 用户位置标记：<gmp-advanced-marker> 同样由 Google Maps SDK 提供，用于在地图上显示点位 */
     if (userPosition) {
       const userMarker = document.createElement('gmp-advanced-marker')
       userMarker.setAttribute('position', center)
@@ -192,6 +210,7 @@ export default function Maps() {
       gmpMap.appendChild(userMarker)
     }
 
+    /* 站点标记：每个站点一个 gmp-advanced-marker，带自定义内容（图标 + 悬浮信息） */
     stations.forEach((s) => {
       const marker = document.createElement('gmp-advanced-marker')
       marker.setAttribute('position', `${s.latitude},${s.longitude}`)
@@ -272,9 +291,10 @@ export default function Maps() {
       }
     })
 
+    /* 将地图根节点挂载到 DOM：此处触发 <gmp-map> 的渲染，地图底图由 Google Maps API 绘制 */
     container.appendChild(gmpMap)
 
-    /** 精简 Google 默认控件：只保留缩放，关掉其余 */
+    /** 精简 Google 默认控件：通过 SDK 暴露的 innerMap.setOptions 只保留缩放，关掉其余 */
     const mapEl = gmpMap as HTMLElement & {
       innerMap?: {
         setOptions: (opts: {
@@ -340,11 +360,14 @@ export default function Maps() {
             </div>
           </div>
         ) : (
-          <div
-            ref={mapContainerRef}
-            className="absolute inset-0 h-full w-full bg-gray-100"
-            style={{ minHeight: 0 }}
-          />
+          <>
+            {/* 地图挂载容器：Google Maps 的 <gmp-map> 会挂载到此 div，地图在此区域内渲染 */}
+            <div
+              ref={mapContainerRef}
+              className="absolute inset-0 h-full w-full bg-gray-100"
+              style={{ minHeight: 0 }}
+            />
+          </>
         )}
       </div>
 

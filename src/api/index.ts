@@ -11,8 +11,10 @@ export {
   ACCESS_TOKEN_KEY,
   REFRESH_TOKEN_KEY,
   getAccessToken,
+  setAuthTokens,
   clearAuthTokens,
 } from './token'
+export type { SetAuthTokensOptions } from './token'
 export type { ApiResult } from './request'
 export {
   userLoginAPI,

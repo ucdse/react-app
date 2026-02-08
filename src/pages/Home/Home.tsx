@@ -14,7 +14,7 @@ export default function Home() {
 
       {/* Gradient Overlay */}
       <div
-        className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60"
+        className="absolute inset-0 bg-linear-to-b from-black/50 via-black/40 to-black/60"
         aria-hidden
       />
 
@@ -38,7 +38,7 @@ export default function Home() {
           {/* Headline */}
           <h1 className="text-4xl font-bold leading-tight text-white drop-shadow-lg sm:text-5xl md:text-6xl lg:text-7xl">
             Rediscover the city
-            <span className="mt-2 block bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <span className="mt-2 block bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
               by bike
             </span>
           </h1>

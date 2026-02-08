@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { userLoginAPI, ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from '@/api'
+import { userLoginAPI, setAuthTokens } from '@/api'
 import { toast } from 'sonner'
 
 const UNACTIVATED_MESSAGE = 'account is disabled'
@@ -9,17 +9,20 @@ export default function Login() {
   const navigate = useNavigate()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: { preventDefault(): void }) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
     try {
       const vo = await userLoginAPI({ identifier, password })
-      localStorage.setItem(ACCESS_TOKEN_KEY, vo.access_token)
-      localStorage.setItem(REFRESH_TOKEN_KEY, vo.refresh_token)
+      setAuthTokens(
+        { accessToken: vo.access_token, refreshToken: vo.refresh_token },
+        { persistent: rememberMe }
+      )
       toast.success('Signed in successfully.')
       navigate('/profile', { replace: true })
     } catch (err) {
@@ -125,6 +128,8 @@ export default function Login() {
               <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
                 <input
                   type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-4 w-4 rounded border-border text-primary focus:ring-primary/20"
                 />
                 <span>Remember me</span>
