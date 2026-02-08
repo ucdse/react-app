@@ -47,7 +47,6 @@ spec:
         string(name: 'IMAGE_NAME', defaultValue: 'kaiwenyao/react-app', description: 'Docker image name')
         string(name: 'IMAGE_TAG', defaultValue: '', description: 'Image tag (empty means BUILD_NUMBER)')
         booleanParam(name: 'PUSH_IMAGE', defaultValue: true, description: 'Push image to registry')
-        booleanParam(name: 'DEPLOY_TO_EC2', defaultValue: false, description: 'Deploy container to EC2')
         string(name: 'CONTAINER_NAME', defaultValue: 'react-app', description: 'Container name on EC2')
         string(name: 'CONTAINER_ENV_FILE', defaultValue: '/opt/react-app/.env', description: 'Env file path on EC2')
         string(name: 'BACKEND_HOST', defaultValue: 'flask-app', description: 'Backend container DNS name in Docker network')
@@ -104,7 +103,9 @@ spec:
                         sh '''
                         echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
                         DOCKER_BUILDKIT=1 docker build --secret id=env,src="${ENV_FILE}" -t ${FULL_IMAGE} .
-                        if [ "${PUSH_IMAGE}" = "true" ] || [ "${DEPLOY_TO_EC2}" = "true" ]; then
+                        # main 分支始终需要部署，故强制推送镜像；
+                        # 其他分支由 PUSH_IMAGE 参数控制是否推送。
+                        if [ "${PUSH_IMAGE}" = "true" ] || [ "${BRANCH_NAME}" = "main" ]; then
                           docker push ${FULL_IMAGE}
                         fi
                         docker logout || true

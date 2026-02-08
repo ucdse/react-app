@@ -8,19 +8,27 @@ export default function Activate() {
   const navigate = useNavigate()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const hasRun = useRef(false)
+  const lastTokenRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!token?.trim() || hasRun.current) return
-    hasRun.current = true
+    const normalizedToken = token?.trim() ?? ''
+    if (!normalizedToken) return
+    if (lastTokenRef.current === normalizedToken) return
+    lastTokenRef.current = normalizedToken
+
+    let cancelled = false
 
     const verify = async () => {
+      setStatus('loading')
+      setErrorMsg(null)
       try {
-        await activateByTokenAPI(token)
+        await activateByTokenAPI(normalizedToken)
+        if (cancelled) return
         setStatus('success')
         toast.success('Account activated. You can sign in now.')
         navigate('/login', { replace: true })
       } catch (err) {
+        if (cancelled) return
         const msg = err instanceof Error ? err.message : 'Verification failed. The link may have expired.'
         setStatus('error')
         setErrorMsg(msg)
@@ -29,6 +37,9 @@ export default function Activate() {
     }
 
     verify()
+    return () => {
+      cancelled = true
+    }
   }, [token, navigate])
 
   return (
