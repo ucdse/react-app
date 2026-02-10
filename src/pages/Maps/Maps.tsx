@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { getStationsAPI, type StationVO } from '@/api/station'
+import Weather from '@/components/Weather'
 
 // ========== Google Maps API 相关常量 ==========
 /** 全局回调名，供 Google Maps 脚本加载完成后调用 */
@@ -42,6 +43,7 @@ export default function Maps() {
   const [stations, setStations] = useState<StationVO[]>([])
   const [stationsLoading, setStationsLoading] = useState(true)
   const [stationsError, setStationsError] = useState<string | null>(null)
+  const [panelOpen, setPanelOpen] = useState(true)
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
   const keyError =
@@ -351,7 +353,7 @@ export default function Maps() {
 
   return (
     <div className="relative w-full h-screen min-h-0">
-      {/* 1. 地图铺满底层 */}
+      {/* 地图铺满整个页面 */}
       <div className="absolute inset-0 z-0">
         {error ? (
           <div className="flex h-full items-center justify-center p-8">
@@ -360,20 +362,39 @@ export default function Maps() {
             </div>
           </div>
         ) : (
-          <>
-            {/* 地图挂载容器：Google Maps 的 <gmp-map> 会挂载到此 div，地图在此区域内渲染 */}
-            <div
-              ref={mapContainerRef}
-              className="absolute inset-0 h-full w-full bg-gray-100"
-              style={{ minHeight: 0 }}
-            />
-          </>
+          <div
+            ref={mapContainerRef}
+            className="h-full w-full bg-gray-100"
+            style={{ minHeight: 0 }}
+          />
         )}
       </div>
 
-      {/* 2. 悬浮横条：站点信息 + 定位（在 Header 下方） */}
-      <div className="absolute top-20 left-0 right-0 z-10 flex justify-center px-4">
-        <div className="bg-white/90 backdrop-blur-sm shadow-lg rounded-full px-6 py-3 flex items-center gap-4 flex-wrap justify-center max-w-2xl">
+      {/* 左侧悬浮面板：站点 + 定位 + 天气合并 */}
+      <div
+        className={`absolute top-24 left-4 bottom-10 z-20 w-72 pointer-events-auto rounded-2xl bg-white/90 backdrop-blur-sm shadow-lg p-4 flex flex-col overflow-visible transition-transform duration-300 ease-in-out ${panelOpen ? 'translate-x-0' : '-translate-x-[calc(100%+16px)]'}`}
+      >
+        {/* 面板切换按钮 — 贴在面板右侧 */}
+        <button
+          type="button"
+          onClick={() => setPanelOpen((v) => !v)}
+          className="absolute -right-6 top-6 flex h-12 w-6 items-center justify-center rounded-r-lg rounded-l-none bg-white/90 backdrop-blur-sm shadow-[2px_1px_6px_-2px_rgba(0,0,0,0.12)] cursor-pointer"
+        >
+          <svg
+            className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${panelOpen ? '' : 'rotate-180'}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+
+        {/* 站点信息 */}
+        <div className="flex items-center gap-2 mb-3">
           <span className="text-sm font-semibold text-foreground">Maps</span>
           {stationsLoading && (
             <span className="text-xs text-muted-foreground">加载站点中…</span>
@@ -384,44 +405,55 @@ export default function Maps() {
           {!stationsLoading && !stationsError && (
             <span className="text-xs text-muted-foreground">共 {stations.length} 个站点</span>
           )}
-          <button
-            type="button"
-            onClick={handleLocate}
-            disabled={locationLoading}
-            className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white shadow transition hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {locationLoading ? (
-              <>
-                <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                定位中…
-              </>
-            ) : (
-              <>
-                <svg
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-                定位到我的位置
-              </>
-            )}
-          </button>
-          {userPosition && (
-            <span className="text-xs text-muted-foreground">
-              {userPosition.lat.toFixed(5)}, {userPosition.lng.toFixed(5)}
-            </span>
-          )}
-          {locationError && (
-            <span className="text-xs text-amber-600">{locationError}</span>
-          )}
         </div>
+
+        {/* 定位按钮 */}
+        <button
+          type="button"
+          onClick={handleLocate}
+          disabled={locationLoading}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-3 py-2 text-sm font-medium text-white shadow transition hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {locationLoading ? (
+            <>
+              <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              定位中…
+            </>
+          ) : (
+            <>
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+              定位到我的位置
+            </>
+          )}
+        </button>
+        {userPosition && (
+          <div className="mt-1.5 text-xs text-muted-foreground text-center">
+            {userPosition.lat.toFixed(5)}, {userPosition.lng.toFixed(5)}
+          </div>
+        )}
+        {locationError && (
+          <div className="mt-1.5 text-xs text-amber-600 text-center">{locationError}</div>
+        )}
+
+        {/* 弹性占位 */}
+        <div className="flex-1 min-h-0" />
+
+        {/* 分割线 */}
+        <div className="mb-3 border-t border-gray-200/60" />
+
+        {/* 天气 */}
+        <Weather lat={userPosition?.lat ?? null} lon={userPosition?.lng ?? null} />
       </div>
 
       {/* Maps 页专用：小固定 footer */}
