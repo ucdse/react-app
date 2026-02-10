@@ -21,3 +21,8 @@ export const USER_ENDPOINTS = {
 export const STATION_ENDPOINTS = {
   list: `${STATION_API_PREFIX}/`,
 } as const
+
+/** 天气模块接口路径 */
+export const WEATHER_ENDPOINTS = {
+  get: '/api/weather',
+} as const

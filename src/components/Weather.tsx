@@ -1,0 +1,386 @@
+import { useEffect, useState } from 'react'
+import { getWeatherAPI } from '@/api/weather'
+
+// 天气数据类型定义
+interface WeatherData {
+  current: {
+    temperature: number
+    icon: 'sunny' | 'cloudy' | 'rainy'
+  }
+  forecast: Array<{
+    time: string
+    temperature: number
+    icon: 'sunny' | 'cloudy' | 'rainy'
+  }>
+}
+
+interface WeatherProps {
+  lat: number | null
+  lon: number | null
+}
+
+type UnknownObject = Record<string, unknown>
+
+function isObject(value: unknown): value is UnknownObject {
+  return typeof value === 'object' && value !== null
+}
+
+function asObject(value: unknown): UnknownObject | undefined {
+  return isObject(value) ? value : undefined
+}
+
+function pickNumber(...candidates: unknown[]): number | undefined {
+  for (const candidate of candidates) {
+    if (typeof candidate === 'number') return candidate
+  }
+  return undefined
+}
+
+function pickString(...candidates: unknown[]): string | undefined {
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string') return candidate
+  }
+  return undefined
+}
+
+function pickWeatherCode(...candidates: unknown[]): number | string | undefined {
+  for (const candidate of candidates) {
+    if (typeof candidate === 'number' || typeof candidate === 'string') return candidate
+  }
+  return undefined
+}
+
+function pickTime(...candidates: unknown[]): string | number | Date | undefined {
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' || typeof candidate === 'number' || candidate instanceof Date) {
+      return candidate
+    }
+  }
+  return undefined
+}
+
+function getFirstWeatherEntry(source: UnknownObject): UnknownObject | undefined {
+  if (!Array.isArray(source.weather)) return undefined
+  const first = source.weather[0]
+  return asObject(first)
+}
+
+function extractWeatherMeta(source: UnknownObject): { code: number | string | undefined; description: string | undefined } {
+  const weather = getFirstWeatherEntry(source)
+  const condition = asObject(source.condition)
+
+  return {
+    code: pickWeatherCode(weather?.id, source.weather_code, condition?.code),
+    description: pickString(weather?.description, condition?.text, source.description),
+  }
+}
+
+function createFallbackWeatherData(): WeatherData {
+  return {
+    current: {
+      temperature: 12,
+      icon: 'cloudy',
+    },
+    forecast: [
+      { time: '13:00', temperature: 12, icon: 'sunny' },
+      { time: '14:00', temperature: 13, icon: 'cloudy' },
+      { time: '15:00', temperature: 14, icon: 'sunny' },
+      { time: '16:00', temperature: 14, icon: 'sunny' },
+      { time: '17:00', temperature: 11, icon: 'rainy' },
+    ],
+  }
+}
+
+// 天气图标组件
+function WeatherIcon({ type }: { type: 'sunny' | 'cloudy' | 'rainy' }) {
+  if (type === 'sunny') {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-8 w-8"
+      >
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+      </svg>
+    )
+  }
+  if (type === 'cloudy') {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-8 w-8"
+      >
+        <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+      </svg>
+    )
+  }
+  // rainy
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-6 w-6"
+    >
+      <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+      <path d="M12 16v6" />
+      <path d="M8 18v6" />
+      <path d="M16 18v6" />
+    </svg>
+  )
+}
+
+/** 开尔文转摄氏度 */
+function kelvinToCelsius(kelvin: number): number {
+  return kelvin - 273.15
+}
+
+/** 若为开尔文（典型范围约 200–320）则转为摄氏度，否则按原值（视为已是摄氏度） */
+function toCelsius(value: number): number {
+  if (value > 150) {
+    return kelvinToCelsius(value)
+  }
+  return value
+}
+
+// 根据天气代码或描述转换为图标类型
+function getWeatherIcon(weatherCode: number | string | undefined, description?: string): 'sunny' | 'cloudy' | 'rainy' {
+  if (typeof weatherCode === 'number') {
+    // 根据天气代码判断（常见天气API代码）
+    if (weatherCode >= 200 && weatherCode < 600) return 'rainy'
+    if (weatherCode >= 800 && weatherCode < 900) {
+      if (weatherCode === 800) return 'sunny'
+      return 'cloudy'
+    }
+  }
+  if (description) {
+    const desc = description.toLowerCase()
+    if (desc.includes('rain') || desc.includes('drizzle') || desc.includes('storm')) return 'rainy'
+    if (desc.includes('clear') || desc.includes('sun')) return 'sunny'
+    return 'cloudy'
+  }
+  return 'cloudy'
+}
+
+// 格式化时间为 HH:mm
+function formatTime(timeString: string | number | Date | undefined): string {
+  if (!timeString) return '00:00'
+  try {
+    let date: Date
+    if (typeof timeString === 'number') {
+      // Unix时间戳（秒或毫秒）
+      date = timeString > 1e10 ? new Date(timeString) : new Date(timeString * 1000)
+    } else if (typeof timeString === 'string') {
+      // ISO字符串或HH:mm格式
+      if (timeString.includes('T') || timeString.includes(' ')) {
+        date = new Date(timeString)
+      } else if (timeString.match(/^\d{2}:\d{2}$/)) {
+        // 已经是HH:mm格式
+        return timeString
+      } else {
+        date = new Date(timeString)
+      }
+    } else {
+      date = timeString
+    }
+    
+    if (isNaN(date.getTime())) {
+      return '00:00'
+    }
+    
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+  } catch {
+    return '00:00'
+  }
+}
+
+// 处理天气数据的通用函数，根据实际API返回格式调整
+function processWeatherData(data: unknown): WeatherData {
+  const fallback = createFallbackWeatherData()
+  if (!isObject(data)) {
+    return fallback
+  }
+
+  // 尝试多种常见的数据格式
+  const dataObj = data
+
+  // 格式1: { current: { temp: 12, ... }, hourly: [...] }
+  const current = asObject(dataObj.current)
+  if (current) {
+    const tempRaw = pickNumber(current.temp, current.temperature, current.temp_c) ?? 12
+    const temp = toCelsius(tempRaw)
+
+    const { code: weatherCode, description } = extractWeatherMeta(current)
+
+    // 处理小时预报
+    let forecast: WeatherData['forecast'] = []
+    if (Array.isArray(dataObj.hourly)) {
+      forecast = dataObj.hourly
+        .slice(0, 5)
+        .map((item: unknown): WeatherData['forecast'][number] | null => {
+          const hour = asObject(item)
+          if (!hour) return null
+
+          const hourTempRaw = pickNumber(hour.temp, hour.temperature, hour.temp_c) ?? 12
+          const hourTemp = toCelsius(hourTempRaw)
+          const hourTime = pickTime(hour.time, hour.dt, hour.datetime)
+          const { code: hourCode, description: hourDesc } = extractWeatherMeta(hour)
+
+          return {
+            time: formatTime(hourTime),
+            temperature: Math.round(hourTemp),
+            icon: getWeatherIcon(hourCode, hourDesc),
+          }
+        })
+        .filter((item): item is WeatherData['forecast'][number] => item !== null)
+    } else if (Array.isArray(dataObj.forecast)) {
+      forecast = dataObj.forecast
+        .slice(0, 5)
+        .map((item: unknown): WeatherData['forecast'][number] | null => {
+          const hour = asObject(item)
+          if (!hour) return null
+
+          const hourTempRaw = pickNumber(hour.temp, hour.temperature, hour.temp_c) ?? 12
+          const hourTemp = toCelsius(hourTempRaw)
+          const hourTime = pickTime(hour.time, hour.dt, hour.datetime)
+          const { code: hourCode, description: hourDesc } = extractWeatherMeta(hour)
+
+          return {
+            time: formatTime(hourTime),
+            temperature: Math.round(hourTemp),
+            icon: getWeatherIcon(hourCode, hourDesc),
+          }
+        })
+        .filter((item): item is WeatherData['forecast'][number] => item !== null)
+    }
+
+    return {
+      current: {
+        temperature: Math.round(temp),
+        icon: getWeatherIcon(weatherCode, description),
+      },
+      forecast: forecast.length > 0 ? forecast : fallback.forecast,
+    }
+  }
+
+  // 如果格式不匹配，返回默认数据
+  return fallback
+}
+
+export default function Weather({ lat, lon }: WeatherProps) {
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const hasLocation = lat !== null && lon !== null
+  const displayWeatherData = hasLocation ? weatherData : createFallbackWeatherData()
+
+  useEffect(() => {
+    if (!hasLocation) {
+      return
+    }
+
+    let cancelled = false
+    Promise.resolve()
+      .then(() => {
+        if (cancelled) return null
+        setLoading(true)
+        setError(null)
+        return getWeatherAPI(lat, lon)
+      })
+      .then((data) => {
+        if (cancelled || !data) return
+
+        // 打印返回的数据以便查看格式
+        console.log('Weather API Response:', data)
+
+        // 根据实际返回的数据格式处理
+        // 这里先使用通用处理逻辑，等看到实际数据后再优化
+        const processedData = processWeatherData(data)
+        setWeatherData(processedData)
+      })
+      .catch((err) => {
+        if (cancelled) return
+        console.error('Weather API Error:', err)
+        setError(err instanceof Error ? err.message : '获取天气数据失败')
+        // 出错时使用默认数据
+        setWeatherData(createFallbackWeatherData())
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [hasLocation, lat, lon])
+
+  // 加载中：不显示任何数字，只显示加载样式
+  if ((hasLocation && loading) || !displayWeatherData) {
+    return (
+      <div>
+        <div className="rounded-xl p-3 mb-4 flex items-center justify-center border border-gray-200/60 min-h-[72px]">
+          <div className="flex items-center gap-2 text-gray-400">
+            <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-500" />
+            <span className="text-sm">加载天气中</span>
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-gray-400 mb-3 font-normal">Forecast</div>
+          <div className="flex gap-1.5 justify-between">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex flex-col items-center gap-1.5 flex-1">
+                <div className="h-3 w-8 rounded skeleton" />
+                <div className="h-6 w-6 rounded-full skeleton" />
+                <div className="h-3 w-7 rounded skeleton" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      {hasLocation && error && (
+        <div className="text-center text-red-500 text-xs mb-2">{error}</div>
+      )}
+      {/* 当前天气部分 */}
+      <div className="bg-white/60 rounded-xl p-3 mb-4 flex items-center justify-between border border-gray-200/60">
+        <div className="text-4xl font-bold text-black leading-none">{displayWeatherData.current.temperature}°C</div>
+        <div className="text-black">
+          <WeatherIcon type={displayWeatherData.current.icon} />
+        </div>
+      </div>
+
+      {/* 小时预报部分 */}
+      <div>
+        <div className="text-xs text-gray-500 mb-3 font-normal">Forecast</div>
+        <div className="flex gap-1.5 justify-between">
+          {displayWeatherData.forecast.map((item, index) => (
+            <div key={index} className="flex flex-col items-center gap-1.5 flex-1">
+              <div className="text-xs text-gray-500 font-normal">{item.time}</div>
+              <div className="text-black flex items-center justify-center h-6">
+                <WeatherIcon type={item.icon} />
+              </div>
+              <div className="text-xs font-bold text-black">{item.temperature}°C</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
