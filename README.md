@@ -2,6 +2,50 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
+## 本地部署步骤
+
+### 环境要求
+
+- **Node.js**：建议 18.x 或更高版本（可用 `node -v` 检查）
+- **npm** 或 **pnpm** / **yarn**（随 Node 安装的 npm 即可）
+
+### 1. 克隆并进入项目目录
+
+```bash
+git clone <仓库地址>
+cd react-app
+```
+
+若已在项目根目录，可跳过此步。
+
+### 2. 安装依赖
+
+```bash
+npm install
+```
+
+### 3. 启动开发环境
+
+```bash
+npm run dev
+```
+
+启动后终端会显示本地访问地址（如 `http://localhost:5173`），在浏览器中打开即可。`--host` 已配置，同一局域网内可用本机 IP 访问。
+
+### 4. 构建与预览（可选）
+
+- **构建生产版本**：
+  ```bash
+  npm run build
+  ```
+  产物在 `dist/` 目录。
+
+- **本地预览构建结果**：
+  ```bash
+  npm run preview
+  ```
+  用于在本地验证打包后的应用。
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
