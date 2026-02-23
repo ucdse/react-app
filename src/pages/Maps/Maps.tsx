@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { getStationsAPI, type StationVO } from '@/api/station'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { getStationsAPI, getStationAvailabilityAPI, type StationVO, type StationAvailabilityVO } from '@/api/station'
 import Weather from '@/components/Weather'
 
 // ========== Google Maps API 相关常量 ==========
@@ -44,6 +45,12 @@ export default function Maps() {
   const [stationsLoading, setStationsLoading] = useState(true)
   const [stationsError, setStationsError] = useState<string | null>(null)
   const [panelOpen, setPanelOpen] = useState(true)
+
+  const [selectedStation, setSelectedStation] = useState<StationVO | null>(null)
+  const [stationDetail, setStationDetail] = useState<StationAvailabilityVO | null>(null)
+
+  const [stationHistory, setStationHistory] = useState<StationAvailabilityVO[]>([])
+  const [detailLoading, setDetailLoading] = useState(false)
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
   const keyError =
@@ -328,6 +335,42 @@ export default function Maps() {
     setTimeout(applyMapOptions, 0)
   }, [scriptLoaded, userPosition, stations])
 
+  
+  // 在點擊站點時，跟 Flask 後端要即時車位資料與歷史紀錄
+  useEffect(() => {
+    if (!selectedStation) {
+      setStationDetail(null)
+      setStationHistory([]) // 清空歷史圖表
+      return
+    }
+
+    let cancelled = false
+    setDetailLoading(true)
+
+    getStationAvailabilityAPI(selectedStation.number)
+      .then((data) => {
+        if (!cancelled) {
+          // 【分流一】：把整包陣列交給歷史圖表
+          setStationHistory(data)
+
+          // 【分流二】：抽出最後一筆 (最新狀態)，交給上方大數字
+          if (data.length > 0) {
+            setStationDetail(data[data.length - 1])
+          } else {
+            setStationDetail(null)
+          }
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setDetailLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedStation])
+
+
   const handleLocate = () => {
     if (!navigator.geolocation) {
       setLocationError('当前浏览器不支持定位')
@@ -455,6 +498,152 @@ export default function Maps() {
         {/* 天气 */}
         <Weather lat={userPosition?.lat ?? null} lon={userPosition?.lng ?? null} />
       </div>
+
+      
+      {/* 站點詳細資訊的彈出面板 (置中顯示) */}
+      {selectedStation && (
+        <>
+          {/* 半透明黑色遮罩，點擊可關閉 */}
+          <div
+            className="absolute inset-0 z-30 bg-black/20 backdrop-blur-sm"
+            onClick={() => setSelectedStation(null)}
+          />
+
+          {/* 置中的白色視窗 */}
+          <div className="absolute top-1/2 left-1/2 z-40 w-[90%] max-w-[460px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-2xl">
+
+            {/* 頂部標題與關閉按鈕 */}
+            <div className="relative mb-6 flex items-center justify-center">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                {selectedStation.name}
+                {/* 狀態小圓點：如果沒車了就亮紅燈，否則亮綠燈 */}
+                <span className={`h-3.5 w-3.5 rounded-full shadow-sm ${stationDetail?.available_bikes === 0 ? 'bg-red-500' : 'bg-[#a3c661]'}`}></span>
+              </h2>
+              <button
+                onClick={() => setSelectedStation(null)}
+                className="absolute right-0 top-1/2 -translate-y-1/2 text-black hover:text-gray-600 transition-colors"
+              >
+                <svg className="h-7 w-7" viewBox="0 0 24 24" fill="currentColor">
+                  <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-1.72 6.97a.75.75 0 10-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 101.06 1.06L12 13.06l1.72 1.72a.75.75 0 101.06-1.06L13.06 12l1.72-1.72a.75.75 0 10-1.06-1.06L12 10.94l-1.72-1.72z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+
+            {/* 數據區塊 */}
+            <div className="mb-2 flex flex-col gap-3">
+              {/* Bikes Available */}
+              <div className="flex items-center rounded-xl border border-gray-400 py-3 px-5">
+                <div className="text-3xl text-black">
+                  <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="5.5" cy="17.5" r="3.5" /><circle cx="18.5" cy="17.5" r="3.5" /><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h2" />
+                  </svg>
+                </div>
+                <div className="w-20 text-center text-[2.5rem] font-medium text-[#a3c661]">
+                  {/* 動態顯示資料，載入中顯示 -- */}
+                  {detailLoading ? '--' : (stationDetail?.available_bikes ?? '--')}
+                </div>
+                <div className="ml-4 text-xl text-gray-800">Bikes Available</div>
+              </div>
+
+              {/* Stands Free */}
+              <div className="flex items-center rounded-xl border border-gray-400 py-3 px-5">
+                <div className="text-[2.2rem] font-bold text-black pl-1.5 pr-1">P</div>
+                <div className="w-20 text-center text-[2.5rem] font-medium text-[#f1c25f]">
+                  {/* 動態顯示資料，載入中顯示 -- */}
+                  {detailLoading ? '--' : (stationDetail?.available_bike_stands ?? '--')}
+                </div>
+                <div className="ml-4 text-xl text-gray-800">Stands Free</div>
+              </div>
+            </div>
+
+            {/* 更新時間 */}
+            <div className="mb-4 text-right text-xs text-gray-400 pr-1">
+              {stationDetail?.last_update
+                ? `Updated: ${
+                // 將資料強制轉字串，安全處理空白分割。若沒有空白就直接顯示
+                String(stationDetail.last_update).includes(' ')
+                  ? String(stationDetail.last_update).split(' ')[1]
+                  : new Date(Number(stationDetail.last_update)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                }`
+                : 'Updated: --'}
+            </div>
+
+            {/* 歷史紀錄圖表區塊 */}
+            <div className="overflow-hidden rounded-xl border border-gray-400">
+              <div className="flex items-center bg-[#9fbab8] text-white">
+                <button className="flex-1 py-1.5 text-center text-sm font-medium hover:bg-black/10 transition-colors">
+                  Historic Average
+                </button>
+                <button className="flex-1 border-l border-white/40 bg-white text-gray-700 py-1.5 text-center text-sm hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+                  <span className="text-gray-400">▼</span> Last 30 Days
+                </button>
+              </div>
+
+              <div className="h-56 w-full bg-white p-2">
+                {/* 👇 判斷如果有歷史資料，就渲染 Recharts 圖表 */}
+                {stationHistory.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={stationHistory}
+                      margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+                    >
+                      <defs>
+                        {/* 綠色漸層，呼應你的 Mockup 設計 */}
+                        <linearGradient id="colorBikes" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#a3c661" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#a3c661" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+
+                      {/* X軸：將時間格式化為 小時:分鐘 */}
+                      <XAxis
+                        dataKey="requested_at"
+                        tickFormatter={(tick) => {
+                          if (!tick) return '';
+                          const d = new Date(tick);
+                          return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
+                        }}
+                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+
+                      {/* Y軸：車輛數 */}
+                      <YAxis
+                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                        axisLine={false}
+                        tickLine={false}
+                        allowDecimals={false}
+                      />
+
+                      {/* 游標移上去的浮動提示 */}
+                      <Tooltip
+                        labelFormatter={(label) => new Date(label).toLocaleString()}
+                        formatter={(value) => [value, 'Available Bikes']}
+                      />
+
+                      <Area
+                        type="monotone"
+                        dataKey="available_bikes"
+                        stroke="#a3c661"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#colorBikes)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-gray-400 text-sm">
+                    {detailLoading ? '載入歷史資料中...' : '暫無歷史資料'}
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+        </>
+      )}
 
       {/* Maps 页专用：小固定 footer */}
       <footer className="fixed bottom-0 left-0 right-0 z-10 border-t border-border/50 bg-background/95 py-2 px-4 text-center text-xs text-muted-foreground backdrop-blur sm:px-6">
