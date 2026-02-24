@@ -291,16 +291,16 @@ export default function Maps() {
         setDetailLoading(true)
         setStationDetail(null)
         setStationHistory([])
-        
+
         setSelectedStation(s) // 更新選中的站點
       })
       marker.addEventListener('gmp-click', () => {
         toggleStationInfo()
-        
+
         setDetailLoading(true)
         setStationDetail(null)
         setStationHistory([])
-        setSelectedStation(s) 
+        setSelectedStation(s)
       })
 
       marker.appendChild(markerContent)
@@ -358,13 +358,25 @@ export default function Maps() {
     getStationAvailabilityAPI(selectedStation.number)
       .then((data) => {
         if (!cancelled) {
-          setStationHistory(data)
-          if (data.length > 0) {
-            setStationDetail(data[data.length - 1])
+          // 1. 將資料依照時間戳 (last_update) 由舊到新 (升冪) 排序
+          const sortedData = [...data].sort(
+            (a, b) => Number(a.last_update) - Number(b.last_update)
+          )
+
+          // 2. 把排序好的資料交給歷史圖表 (保證 X 軸時間由左至右)
+          setStationHistory(sortedData)
+
+          // 3. 排序過後，陣列的最後一筆一定就是時間最新的資料！
+          if (sortedData.length > 0) {
+            setStationDetail(sortedData[sortedData.length - 1])
           } else {
             setStationDetail(null)
           }
         }
+      })
+      .catch((err) => {
+        // 建議這裡也加上 catch 處理錯誤，避免 API 失敗時完全沒反應
+        console.error('Failed to fetch station details:', err)
       })
       .finally(() => {
         if (!cancelled) setDetailLoading(false)
@@ -521,8 +533,17 @@ export default function Maps() {
             <div className="relative mb-6 flex items-center justify-center">
               <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                 {selectedStation.name}
-                {/* 狀態小圓點：如果沒車了就亮紅燈，否則亮綠燈 */}
-                <span className={`h-3.5 w-3.5 rounded-full shadow-sm ${stationDetail?.available_bikes === 0 ? 'bg-red-500' : 'bg-[#a3c661]'}`}></span>
+                {/* 狀態小圓點：載入中(閃爍灰) -> 沒資料(暗灰) -> 沒車(紅) -> 有車(綠) */}
+                <span
+                  className={`h-3.5 w-3.5 rounded-full shadow-sm ${detailLoading
+                      ? 'bg-gray-300 animate-pulse' // 載入中：淺灰色 + 呼吸燈動畫
+                      : !stationDetail
+                        ? 'bg-gray-400'               // API 失敗或無資料：暗灰色
+                        : stationDetail.available_bikes === 0
+                          ? 'bg-red-500'                // 確定沒車了：紅色
+                          : 'bg-[#a3c661]'              // 確定有車：綠色
+                    }`}
+                ></span>
               </h2>
               <button
                 onClick={() => setSelectedStation(null)}
