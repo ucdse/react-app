@@ -287,8 +287,21 @@ export default function Maps() {
       markerContent.addEventListener('click', (event) => {
         event.stopPropagation()
         toggleStationInfo()
+
+        setDetailLoading(true)
+        setStationDetail(null)
+        setStationHistory([])
+        
+        setSelectedStation(s) // 更新選中的站點
       })
-      marker.addEventListener('gmp-click', toggleStationInfo)
+      marker.addEventListener('gmp-click', () => {
+        toggleStationInfo()
+        
+        setDetailLoading(true)
+        setStationDetail(null)
+        setStationHistory([])
+        setSelectedStation(s) 
+      })
 
       marker.appendChild(markerContent)
       gmpMap.appendChild(marker)
@@ -338,16 +351,9 @@ export default function Maps() {
 
   // 在點擊站點時，跟 Flask 後端要即時車位資料與歷史紀錄
   useEffect(() => {
-    if (!selectedStation) {
-      return
-    }
+    if (!selectedStation) return
 
     let cancelled = false
-    setDetailLoading(true)
-
-    // 清空舊資料
-    setStationDetail(null)
-    setStationHistory([])
 
     getStationAvailabilityAPI(selectedStation.number)
       .then((data) => {
@@ -363,6 +369,7 @@ export default function Maps() {
       .finally(() => {
         if (!cancelled) setDetailLoading(false)
       })
+
     return () => {
       cancelled = true
     }

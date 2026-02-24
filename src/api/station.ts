@@ -25,32 +25,47 @@ export const getStationsAPI = async (): Promise<StationVO[]> => {
 
 
 export interface StationAvailabilityVO {
-  number: number;
-  available_bikes: number;
-  available_bike_stands: number;
-  status: string;
-  last_update: string;
-  timestamp: string;
-  requested_at: string;
+  id?: number;                    // Database ID / Sequence (optional)
+  number: number;                 // Station number
+  available_bikes: number;        // Number of available bikes
+  available_bike_stands: number;  // Number of available bike stands
+  bike_stands?: number;           // Total bike stands (optional, as it's missing in the CSV but might be used elsewhere)
+  status: string;                 // Station status (e.g., "OPEN")
+  last_update: number | string;   // Millisecond timestamp (number based on CSV), keeping string for fallback compatibility
+  timestamp: string;              // Database record timestamp
+  requested_at: string;           // API request timestamp
 }
 
 /**
- * 獲取單一站點的最新可用狀態與歷史紀錄
+ * Fetch the latest availability status and historical records for a single station.
+ */
+/**
+ * Fetch the latest availability status and historical records for a single station.
  */
 export const getStationAvailabilityAPI = async (number: number): Promise<StationAvailabilityVO[]> => {
   try {
-    const res = await request.get(`/api/stations/${number}/availability`) as any;
+    // 1. 先將 API 回傳結果標記為 unknown，避免 TypeScript 提早報錯
+    const res = await request.get<unknown>(`/api/stations/${number}/availability`);
     
-    // 智能尋找資料在哪一層
-    const actualData = res?.data?.data || res?.data || res;
+    let actualData: StationAvailabilityVO | StationAvailabilityVO[];
+    
+    // 2. 安全地檢查 res 是否為物件，並且裡面有沒有 'data' 這個屬性
+    if (res && typeof res === 'object' && 'data' in res) {
+      // 情況 A：資料被包在 { data: ... } 裡面，我們明確告訴 TS 這裡的結構
+      actualData = (res as { data: StationAvailabilityVO | StationAvailabilityVO[] }).data;
+    } else {
+      // 情況 B：資料是直接回傳的，我們明確告訴 TS 它是純資料或陣列
+      actualData = res as StationAvailabilityVO | StationAvailabilityVO[];
+    }
 
     if (!actualData) return [];
 
-    // 統一包裝成「陣列」回傳給 Maps.tsx
+    // 3. 確保永遠回傳陣列給 Maps.tsx 的 stationHistory 使用
     return Array.isArray(actualData) ? actualData : [actualData];
 
   } catch (error) {
-    console.error(`獲取站點 ${number} 的車位資料失敗:`, error);
-    return []; // 失敗時回傳空陣列
+    console.error(`Failed to fetch availability data for station ${number}:`, error);
+    // 失敗時優雅降級，回傳空陣列，畫面才不會壞掉
+    return []; 
   }
 }
