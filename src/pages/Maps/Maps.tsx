@@ -359,11 +359,14 @@ export default function Maps() {
       .then((data) => {
         if (!cancelled) {
           // 1. 將資料依照時間戳 (last_update) 由舊到新 (升冪) 排序
-          const sortedData = [...data].sort(
-            (a, b) => Number(a.last_update) - Number(b.last_update)
-          )
+          const sortedData = [...data].sort((a, b) => {
+            // 不管是字串還是數字，都先轉成 Date 物件，再用 .getTime() 取得精準的毫秒數來相減
+            const timeA = new Date(a.last_update).getTime()
+            const timeB = new Date(b.last_update).getTime()
+            return timeA - timeB
+          })
 
-          // 2. 把排序好的資料交給歷史圖表 (保證 X 軸時間由左至右)
+          // 2. 把排序好的資料交給歷史圖表
           setStationHistory(sortedData)
 
           // 3. 排序過後，陣列的最後一筆一定就是時間最新的資料！
