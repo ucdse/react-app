@@ -166,7 +166,7 @@ export default function Maps() {
     const setMarkerZIndex = (marker: HTMLElement, zIndex: number) => {
       marker.setAttribute('z-index', String(zIndex))
       marker.style.zIndex = String(zIndex)
-      ;(marker as HTMLElement & { zIndex?: number }).zIndex = zIndex
+        ; (marker as HTMLElement & { zIndex?: number }).zIndex = zIndex
     }
 
     const clearHideTimeout = () => {
@@ -335,25 +335,24 @@ export default function Maps() {
     setTimeout(applyMapOptions, 0)
   }, [scriptLoaded, userPosition, stations])
 
-  
+
   // 在點擊站點時，跟 Flask 後端要即時車位資料與歷史紀錄
   useEffect(() => {
     if (!selectedStation) {
-      setStationDetail(null)
-      setStationHistory([]) // 清空歷史圖表
       return
     }
 
     let cancelled = false
     setDetailLoading(true)
 
+    // 清空舊資料
+    setStationDetail(null)
+    setStationHistory([])
+
     getStationAvailabilityAPI(selectedStation.number)
       .then((data) => {
         if (!cancelled) {
-          // 【分流一】：把整包陣列交給歷史圖表
           setStationHistory(data)
-
-          // 【分流二】：抽出最後一筆 (最新狀態)，交給上方大數字
           if (data.length > 0) {
             setStationDetail(data[data.length - 1])
           } else {
@@ -364,7 +363,6 @@ export default function Maps() {
       .finally(() => {
         if (!cancelled) setDetailLoading(false)
       })
-
     return () => {
       cancelled = true
     }
@@ -499,7 +497,7 @@ export default function Maps() {
         <Weather lat={userPosition?.lat ?? null} lon={userPosition?.lng ?? null} />
       </div>
 
-      
+
       {/* 站點詳細資訊的彈出面板 (置中顯示) */}
       {selectedStation && (
         <>
