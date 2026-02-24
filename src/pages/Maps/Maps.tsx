@@ -358,18 +358,25 @@ export default function Maps() {
     getStationAvailabilityAPI(selectedStation.number)
       .then((data) => {
         if (!cancelled) {
-          // 1. 將資料依照時間戳 (last_update) 由舊到新 (升冪) 排序
+          const parseTime = (val: number | string) => {
+            const num = Number(val)
+            // 如果轉成數字後不是 NaN（代表它是純數字，或者是字串格式的純數字）
+            if (!isNaN(num)) {
+              return num
+            }
+            // 否則，它就是包含年月日的字串，這時交給 Date 處理才安全
+            return new Date(val).getTime()
+          }
+
+          // 1. 將資料依照時間戳 (last_update) 由舊到新序
           const sortedData = [...data].sort((a, b) => {
-            // 不管是字串還是數字，都先轉成 Date 物件，再用 .getTime() 取得精準的毫秒數來相減
-            const timeA = new Date(a.last_update).getTime()
-            const timeB = new Date(b.last_update).getTime()
-            return timeA - timeB
+            return parseTime(a.last_update) - parseTime(b.last_update)
           })
 
           // 2. 把排序好的資料交給歷史圖表
           setStationHistory(sortedData)
 
-          // 3. 排序過後，陣列的最後一筆一定就是時間最新的資料！
+          // 3. 排序過後，陣列的最後一筆就是時間最新的資料
           if (sortedData.length > 0) {
             setStationDetail(sortedData[sortedData.length - 1])
           } else {
@@ -378,7 +385,6 @@ export default function Maps() {
         }
       })
       .catch((err) => {
-        // 建議這裡也加上 catch 處理錯誤，避免 API 失敗時完全沒反應
         console.error('Failed to fetch station details:', err)
       })
       .finally(() => {
