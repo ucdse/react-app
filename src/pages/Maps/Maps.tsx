@@ -369,20 +369,16 @@ export default function Maps() {
   // 在點擊站點時，跟 Flask 後端要即時車位資料與歷史紀錄
   useEffect(() => {
     if (!selectedStation) return
-
     let cancelled = false
-
     getStationAvailabilityAPI(selectedStation.number)
       .then((data) => {
         if (!cancelled) {
           const parseTime = (val: number | string) => {
             const num = Number(val)
-            // 如果轉成數字後不是 NaN（代表它是純數字，或者是字串格式的純數字）
             if (!isNaN(num)) {
               return num
             }
-            // 否則，它就是包含年月日的字串，這時交給 Date 處理才安全
-            return new Date(val).getTime()
+            return new Date(String(val).replace(' ', 'T')).getTime()
           }
 
           // 1. 將資料依照時間戳 (last_update) 由舊到新序
