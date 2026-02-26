@@ -13,6 +13,23 @@ const DEMO_MAP_ID = 'DEMO_MAP_ID'
 const MARKER_BASE_Z_INDEX = 1
 const MARKER_ACTIVE_Z_INDEX = 10_000
 
+// 安全格式化更新時間的 Helper
+const formatUpdateTime = (val: string | number) => {
+  if (!val) return '--'
+
+  const num = Number(val)
+  // 解決 Safari 瀏覽器看不懂 SQL 格式 "YYYY-MM-DD HH:mm:ss" 的問題，把空白換成標準的 "T"
+  const safeString = typeof val === 'string' ? val.replace(' ', 'T') : val
+
+  // 如果是純數字(或數字字串)就用 num，否則就用 safeString 去給 Date 解析
+  const dateObj = !isNaN(num) ? new Date(num) : new Date(safeString)
+
+  // 如果解析出來真的是無效時間，就顯示 --
+  if (isNaN(dateObj.getTime())) return '--'
+
+  return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
 declare global {
   interface Window {
     [GOOGLE_MAPS_CALLBACK]?: () => void
@@ -545,12 +562,12 @@ export default function Maps() {
                 {/* 狀態小圓點：載入中(閃爍灰) -> 沒資料(暗灰) -> 沒車(紅) -> 有車(綠) */}
                 <span
                   className={`h-3.5 w-3.5 rounded-full shadow-sm ${detailLoading
-                      ? 'bg-gray-300 animate-pulse' // 載入中：淺灰色 + 呼吸燈動畫
-                      : !stationDetail
-                        ? 'bg-gray-400'               // API 失敗或無資料：暗灰色
-                        : stationDetail.available_bikes === 0
-                          ? 'bg-red-500'                // 確定沒車了：紅色
-                          : 'bg-[#a3c661]'              // 確定有車：綠色
+                    ? 'bg-gray-300 animate-pulse' // 載入中：淺灰色 + 呼吸燈動畫
+                    : !stationDetail
+                      ? 'bg-gray-400'               // API 失敗或無資料：暗灰色
+                      : stationDetail.available_bikes === 0
+                        ? 'bg-red-500'                // 確定沒車了：紅色
+                        : 'bg-[#a3c661]'              // 確定有車：綠色
                     }`}
                 ></span>
               </h2>
@@ -594,12 +611,7 @@ export default function Maps() {
             {/* 更新時間 */}
             <div className="mb-4 text-right text-xs text-gray-400 pr-1">
               {stationDetail?.last_update
-                ? `Updated: ${
-                // 將資料強制轉字串，安全處理空白分割。若沒有空白就直接顯示
-                String(stationDetail.last_update).includes(' ')
-                  ? String(stationDetail.last_update).split(' ')[1]
-                  : new Date(Number(stationDetail.last_update)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                }`
+                ? `Updated: ${formatUpdateTime(stationDetail.last_update)}`
                 : 'Updated: --'}
             </div>
 

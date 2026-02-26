@@ -39,33 +39,33 @@ export interface StationAvailabilityVO {
 /**
  * Fetch the latest availability status and historical records for a single station.
  */
-/**
- * Fetch the latest availability status and historical records for a single station.
- */
 export const getStationAvailabilityAPI = async (number: number): Promise<StationAvailabilityVO[]> => {
   try {
-    // 1. 先將 API 回傳結果標記為 unknown，避免 TypeScript 提早報錯
+  // 發送請求
     const res = await request.get<unknown>(`/api/stations/${number}/availability`);
     
-    let actualData: StationAvailabilityVO | StationAvailabilityVO[];
-    
-    // 2. 安全地檢查 res 是否為物件，並且裡面有沒有 'data' 這個屬性
-    if (res && typeof res === 'object' && 'data' in res) {
-      // 情況 A：資料被包在 { data: ... } 裡面，我們明確告訴 TS 這裡的結構
-      actualData = (res as { data: StationAvailabilityVO | StationAvailabilityVO[] }).data;
-    } else {
-      // 情況 B：資料是直接回傳的，我們明確告訴 TS 它是純資料或陣列
-      actualData = res as StationAvailabilityVO | StationAvailabilityVO[];
+    let actualData: unknown = res;
+
+    // 1. 剝除第一層：Axios 的 response.data wrapper (如果有的話)
+    if (actualData !== null && typeof actualData === 'object' && 'data' in actualData) {
+      actualData = (actualData as Record<string, unknown>).data;
     }
 
-    if (!actualData) return [];
+    // 2. 剝除第二層：後端可能自己包裝的 { data: [...] } (確保它不是陣列才去剝)
+    if (actualData !== null && typeof actualData === 'object' && !Array.isArray(actualData) && 'data' in actualData) {
+      actualData = (actualData as Record<string, unknown>).data;
+    }
 
-    // 3. 確保永遠回傳陣列給 Maps.tsx 的 stationHistory 使用
-    return Array.isArray(actualData) ? actualData : [actualData];
+    // 3. 確保型別安全並轉回我們要的格式
+    const finalData = actualData as StationAvailabilityVO | StationAvailabilityVO[];
+
+    if (!finalData) return [];
+
+    // 4. 統一包裝成「陣列」回傳
+    return Array.isArray(finalData) ? finalData : [finalData];
 
   } catch (error) {
     console.error(`Failed to fetch availability data for station ${number}:`, error);
-    // 失敗時優雅降級，回傳空陣列，畫面才不會壞掉
     return []; 
   }
 }
