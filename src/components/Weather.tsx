@@ -14,9 +14,7 @@ interface WeatherData {
   }>
 }
 
-interface WeatherProps {
-  // 不再需要传入经纬度，统一展示都柏林天气
-}
+
 
 type UnknownObject = Record<string, unknown>
 
@@ -279,7 +277,7 @@ function processWeatherData(data: unknown): WeatherData {
   return fallback
 }
 
-export default function Weather({ }: WeatherProps) {
+export default function Weather() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
