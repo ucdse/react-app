@@ -535,7 +535,7 @@ export default function Maps() {
         <div className="mb-3 border-t border-gray-200/60" />
 
         {/* 天气 */}
-        <Weather lat={userPosition?.lat ?? null} lon={userPosition?.lng ?? null} />
+        <Weather />
       </div>
 
 
@@ -642,7 +642,7 @@ export default function Maps() {
                       {/* X軸：將時間格式化為 小時:分鐘 */}
                       <XAxis
                         dataKey="requested_at"
-                        tickFormatter={(tick) => {
+                        tickFormatter={(tick: string | number) => {
                           if (!tick) return '';
                           const d = new Date(tick);
                           return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
