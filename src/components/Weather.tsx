@@ -310,7 +310,6 @@ export default function Weather({ }: WeatherProps) {
         if (cancelled) return
         console.error('Weather API Error:', err)
         setError(err instanceof Error ? err.message : '获取天气数据失败')
-        setWeatherData(createFallbackWeatherData())
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
