@@ -60,10 +60,10 @@ function openStream(
       async onopen(response) {
         if (response.ok) return
         if (response.status === 401 || response.status === 403) {
-          const newToken = await refreshAccessToken()
-          if (newToken) {
-            throw new Error(RETRY_AFTER_REFRESH)
-          }
+          // Unify 401/403 handshake failures under refresh sentinel so caller can
+          // translate both refresh-success and refresh-failed cases consistently.
+          await refreshAccessToken()
+          throw new Error(RETRY_AFTER_REFRESH)
         }
         throw new Error(response.statusText || `HTTP ${response.status}`)
       },
