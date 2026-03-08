@@ -80,6 +80,9 @@ export default function Header() {
               <Link to="/news" className={navLinkClasses('/news')}>
                 News
               </Link>
+              <Link to="/chat" className={navLinkClasses('/chat')}>
+                Chat
+              </Link>
               <Link to="/maps" className={navLinkClasses('/maps')}>
                 Maps
               </Link>
