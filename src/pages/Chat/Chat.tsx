@@ -113,6 +113,7 @@ export default function Chat() {
   }
 
   useEffect(() => {
+    isMountedRef.current = true
     return () => {
       isMountedRef.current = false
       abortRef.current?.abort()
