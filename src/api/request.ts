@@ -280,3 +280,6 @@ request.interceptors.response.use(
 )
 
 export default request
+
+/** 供非 axios 请求（如 SSE）使用：先取当前 access_token，若无则用 refresh_token 静默刷新后返回 */
+export { resolveAccessToken, refreshAccessToken }
