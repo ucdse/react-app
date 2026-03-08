@@ -60,6 +60,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/chat" className="text-sm text-muted-foreground transition-colors hover:text-primary">
+                  Chat
+                </Link>
+              </li>
+              <li>
                 <a href="#" className="text-sm text-muted-foreground transition-colors hover:text-primary">
                   About Us
                 </a>
