@@ -85,11 +85,6 @@ export default function Chat() {
     const text = input.trim()
     if (!text || sending) return
 
-    if (!getAccessToken()) {
-      toast.error('Please sign in to use AI chat.')
-      return
-    }
-
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: 'user',
