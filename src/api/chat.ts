@@ -19,7 +19,7 @@ const RETRY_AFTER_REFRESH = 'RETRY_AFTER_REFRESH'
 const isRetryAfterRefreshError = (error: Error): boolean =>
   error.message === RETRY_AFTER_REFRESH
 const CHAT_AUTH_FAILURE_MESSAGE = 'Session expired. Please sign in again.'
-const STREAM_INCOMPLETE_MESSAGE = 'Stream closed before completion marker.'
+const STREAM_EMPTY_MESSAGE = 'Stream closed before any response content.'
 const isCompletionMarker = (chunk: string): boolean => chunk.trim() === '[DONE]'
 
 function openStream(
@@ -36,6 +36,7 @@ function openStream(
   }
   return new Promise((resolve, reject) => {
     let completed = false
+    let receivedContent = false
     let settled = false
 
     const resolveOnce = () => {
@@ -71,12 +72,15 @@ function openStream(
         if (ev.data == null) return
         if (isCompletionMarker(ev.data)) {
           completed = true
+          onMessage(ev.data)
+          return
         }
+        receivedContent = true
         onMessage(ev.data)
       },
       onclose() {
-        if (!completed) {
-          rejectOnce(new Error(STREAM_INCOMPLETE_MESSAGE))
+        if (!completed && !receivedContent) {
+          rejectOnce(new Error(STREAM_EMPTY_MESSAGE))
           return
         }
         onDone?.()
