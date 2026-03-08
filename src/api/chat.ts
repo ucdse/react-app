@@ -16,6 +16,8 @@ export interface ChatStreamOptions {
 }
 
 const RETRY_AFTER_REFRESH = 'RETRY_AFTER_REFRESH'
+const isRetryAfterRefreshError = (error: Error): boolean =>
+  error.message === RETRY_AFTER_REFRESH
 
 function openStream(
   url: string,
@@ -38,10 +40,9 @@ function openStream(
       openWhenHidden: true,
       async onopen(response) {
         if (response.ok) return
-        if (response.status === 401) {
+        if (response.status === 401 || response.status === 403) {
           const newToken = await refreshAccessToken()
           if (newToken) {
-            reject(new Error(RETRY_AFTER_REFRESH))
             throw new Error(RETRY_AFTER_REFRESH)
           }
         }
@@ -57,8 +58,13 @@ function openStream(
         resolve()
       },
       onerror(err) {
-        onError?.(err instanceof Error ? err : new Error(String(err)))
-        reject(err)
+        const normalizedError = err instanceof Error ? err : new Error(String(err))
+        if (isRetryAfterRefreshError(normalizedError)) {
+          throw normalizedError
+        }
+        onError?.(normalizedError)
+        // Throwing here stops fetchEventSource auto-retry so outer lifecycle stays consistent.
+        throw normalizedError
       },
     }).catch(reject)
   })
