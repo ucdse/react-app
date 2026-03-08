@@ -18,6 +18,9 @@ export interface ChatStreamOptions {
 const RETRY_AFTER_REFRESH = 'RETRY_AFTER_REFRESH'
 const isRetryAfterRefreshError = (error: Error): boolean =>
   error.message === RETRY_AFTER_REFRESH
+const CHAT_AUTH_FAILURE_MESSAGE = 'Session expired. Please sign in again.'
+const STREAM_INCOMPLETE_MESSAGE = 'Stream closed before completion marker.'
+const isCompletionMarker = (chunk: string): boolean => chunk.trim() === '[DONE]'
 
 function openStream(
   url: string,
@@ -32,6 +35,22 @@ function openStream(
     token,
   }
   return new Promise((resolve, reject) => {
+    let completed = false
+    let settled = false
+
+    const resolveOnce = () => {
+      if (settled) return
+      settled = true
+      resolve()
+    }
+
+    const rejectOnce = (error: Error, notify = true) => {
+      if (settled) return
+      settled = true
+      if (notify) onError?.(error)
+      reject(error)
+    }
+
     fetchEventSource(url, {
       method: 'POST',
       headers,
@@ -46,27 +65,39 @@ function openStream(
             throw new Error(RETRY_AFTER_REFRESH)
           }
         }
-        const err = new Error(response.statusText || `HTTP ${response.status}`)
-        reject(err)
-        throw err
+        throw new Error(response.statusText || `HTTP ${response.status}`)
       },
       onmessage(ev) {
-        if (ev.data != null) onMessage(ev.data)
+        if (ev.data == null) return
+        if (isCompletionMarker(ev.data)) {
+          completed = true
+        }
+        onMessage(ev.data)
       },
       onclose() {
+        if (!completed) {
+          rejectOnce(new Error(STREAM_INCOMPLETE_MESSAGE))
+          return
+        }
         onDone?.()
-        resolve()
+        resolveOnce()
       },
       onerror(err) {
         const normalizedError = err instanceof Error ? err : new Error(String(err))
         if (isRetryAfterRefreshError(normalizedError)) {
           throw normalizedError
         }
-        onError?.(normalizedError)
         // Throwing here stops fetchEventSource auto-retry so outer lifecycle stays consistent.
         throw normalizedError
       },
-    }).catch(reject)
+    }).catch((err) => {
+      const normalizedError = err instanceof Error ? err : new Error(String(err))
+      if (isRetryAfterRefreshError(normalizedError)) {
+        rejectOnce(normalizedError, false)
+        return
+      }
+      rejectOnce(normalizedError)
+    })
   })
 }
 
@@ -87,11 +118,23 @@ export async function chatStreamAPI(options: ChatStreamOptions): Promise<void> {
   try {
     await openStream(url, token, options, signal)
   } catch (err) {
-    if (err instanceof Error && err.message === RETRY_AFTER_REFRESH) {
+    if (err instanceof Error && isRetryAfterRefreshError(err)) {
       token = await resolveAccessToken()
-      if (token) {
+      if (!token) {
+        const authError = new Error(CHAT_AUTH_FAILURE_MESSAGE)
+        options.onError?.(authError)
+        throw authError
+      }
+      try {
         await openStream(url, token, options, signal)
         return
+      } catch (retryErr) {
+        if (retryErr instanceof Error && isRetryAfterRefreshError(retryErr)) {
+          const authError = new Error(CHAT_AUTH_FAILURE_MESSAGE)
+          options.onError?.(authError)
+          throw authError
+        }
+        throw retryErr
       }
     }
     throw err
