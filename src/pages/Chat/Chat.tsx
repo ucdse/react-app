@@ -33,6 +33,16 @@ function parseStreamChunk(raw: string): string {
   }
 }
 
+function isAbortLikeError(error: unknown): boolean {
+  if (error instanceof DOMException) {
+    return error.name === 'AbortError'
+  }
+  if (error instanceof Error) {
+    return error.name === 'AbortError' || error.message.toLowerCase().includes('aborted')
+  }
+  return false
+}
+
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE])
   const [input, setInput] = useState('')
@@ -61,6 +71,13 @@ export default function Chat() {
         if (me?.username) setChatId(`${me.username}_${suffix}`)
       })
       .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort()
+      abortRef.current = null
+    }
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -103,6 +120,7 @@ export default function Chat() {
         message: text,
         signal: controller.signal,
         onMessage(chunk) {
+          if (controller.signal.aborted) return
           const part = parseStreamChunk(chunk)
           if (!part) return
           setMessages((prev) =>
@@ -118,10 +136,14 @@ export default function Chat() {
           }
         },
         onDone() {
+          if (controller.signal.aborted) return
           setSending(false)
           abortRef.current = null
         },
         onError(err) {
+          if (controller.signal.aborted || isAbortLikeError(err)) {
+            return
+          }
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantId
@@ -134,7 +156,11 @@ export default function Chat() {
           toast.error(err.message)
         },
       })
-    } catch {
+    } catch (err) {
+      if (controller.signal.aborted || isAbortLikeError(err)) {
+        abortRef.current = null
+        return
+      }
       setSending(false)
       abortRef.current = null
     }
