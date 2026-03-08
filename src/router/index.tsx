@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
 import Layout from '@/components/Layout'
 import Activate from '@/pages/Activate/Activate'
+import Chat from '@/pages/Chat/Chat'
 import Home from '@/pages/Home/Home'
 import Login from '@/pages/Login/Login'
 import Maps from '@/pages/Maps/Maps'
@@ -37,6 +38,10 @@ export const router = createBrowserRouter([
       {
         path: 'news',
         element: <News />,
+      },
+      {
+        path: 'chat',
+        element: <Chat />,
       },
       {
         path: 'profile',

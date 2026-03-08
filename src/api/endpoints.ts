@@ -26,3 +26,8 @@ export const STATION_ENDPOINTS = {
 export const WEATHER_ENDPOINTS = {
   get: '/api/weather',
 } as const
+
+/** 聊天流式接口路径 */
+export const CHAT_ENDPOINTS = {
+  stream: '/api/chat/stream',
+} as const
