@@ -50,6 +50,10 @@ export default function Chat() {
   const [chatId, setChatId] = useState<string>('')
   const abortRef = useRef<AbortController | null>(null)
   const messageListRef = useRef<HTMLDivElement>(null)
+  const chatIdSuffixRef = useRef<string>('')
+  const chatIdInitPromiseRef = useRef<Promise<string> | null>(null)
+  const submitLockRef = useRef(false)
+  const isMountedRef = useRef(true)
 
   const handleChatPanelWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     const list = messageListRef.current
@@ -61,29 +65,95 @@ export default function Chat() {
     list.scrollTop += e.deltaY
   }
 
-  // 每次进入/刷新都换新 chat_id（已登录用 username_xxx）
-  useEffect(() => {
-    const token = getAccessToken()
-    if (!token) return
-    const suffix = crypto.randomUUID?.()?.slice(0, 8) ?? String(Date.now()).slice(-8)
-    getMeAPI()
-      .then((me) => {
-        if (me?.username) setChatId(`${me.username}_${suffix}`)
+  const getChatIdSuffix = (): string => {
+    if (chatIdSuffixRef.current) return chatIdSuffixRef.current
+    const generatedSuffix =
+      crypto.randomUUID?.()?.replace(/-/g, '').slice(0, 8) ??
+      Math.random().toString(36).slice(2, 10)
+    chatIdSuffixRef.current = generatedSuffix || 'chat'
+    return chatIdSuffixRef.current
+  }
+
+  const buildChatId = (username?: string): string => {
+    const normalizedName = username?.trim()
+    return `${normalizedName || 'chat'}_${getChatIdSuffix()}`
+  }
+
+  const ensureChatId = async (): Promise<string> => {
+    const currentChatId = chatId.trim()
+    if (currentChatId) return currentChatId
+
+    if (chatIdInitPromiseRef.current) {
+      return chatIdInitPromiseRef.current
+    }
+
+    const fallbackChatId = buildChatId()
+    if (!getAccessToken()) {
+      if (isMountedRef.current) {
+        setChatId(fallbackChatId)
+      }
+      return fallbackChatId
+    }
+
+    const initPromise = getMeAPI()
+      .then((me) => buildChatId(me?.username))
+      .catch(() => fallbackChatId)
+      .then((nextChatId) => {
+        if (isMountedRef.current) {
+          setChatId(nextChatId)
+        }
+        return nextChatId
       })
-      .catch(() => {})
-  }, [])
+      .finally(() => {
+        chatIdInitPromiseRef.current = null
+      })
+
+    chatIdInitPromiseRef.current = initPromise
+    return initPromise
+  }
 
   useEffect(() => {
     return () => {
+      isMountedRef.current = false
       abortRef.current?.abort()
       abortRef.current = null
+      submitLockRef.current = false
     }
   }, [])
+
+  const releaseSubmitLock = () => {
+    submitLockRef.current = false
+    abortRef.current = null
+  }
+
+  const finishSending = () => {
+    if (isMountedRef.current) {
+      setSending(false)
+    }
+    releaseSubmitLock()
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const text = input.trim()
-    if (!text || sending) return
+    if (!text || sending || submitLockRef.current) return
+
+    submitLockRef.current = true
+    setSending(true)
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    let resolvedChatId: string
+    try {
+      resolvedChatId = await ensureChatId()
+    } catch {
+      finishSending()
+      return
+    }
+    if (controller.signal.aborted || !isMountedRef.current) {
+      finishSending()
+      return
+    }
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
@@ -101,17 +171,10 @@ export default function Chat() {
 
     setMessages((prev) => [...prev, userMessage, assistantMessage])
     setInput('')
-    setSending(true)
-
-    if (abortRef.current) {
-      abortRef.current.abort()
-    }
-    const controller = new AbortController()
-    abortRef.current = controller
 
     try {
       await chatStreamAPI({
-        chat_id: chatId,
+        chat_id: resolvedChatId,
         message: text,
         signal: controller.signal,
         onMessage(chunk) {
@@ -132,11 +195,11 @@ export default function Chat() {
         },
         onDone() {
           if (controller.signal.aborted) return
-          setSending(false)
-          abortRef.current = null
+          finishSending()
         },
         onError(err) {
           if (controller.signal.aborted || isAbortLikeError(err)) {
+            finishSending()
             return
           }
           setMessages((prev) =>
@@ -146,18 +209,16 @@ export default function Chat() {
                 : m
             )
           )
-          setSending(false)
-          abortRef.current = null
+          finishSending()
           toast.error(err.message)
         },
       })
     } catch (err) {
       if (controller.signal.aborted || isAbortLikeError(err)) {
-        abortRef.current = null
+        finishSending()
         return
       }
-      setSending(false)
-      abortRef.current = null
+      finishSending()
     }
   }
 
@@ -214,7 +275,7 @@ export default function Chat() {
                         <span className="h-2 w-2 rounded-full bg-muted-foreground/60 animate-bounce" />
                       </div>
                     ) : (
-                      <p className="text-sm whitespace-pre-wrap wrap-break-word">
+                      <p className="text-sm whitespace-pre-wrap break-words">
                         {msg.content || '\u00A0'}
                       </p>
                     )}
