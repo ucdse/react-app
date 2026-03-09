@@ -1,10 +1,7 @@
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 import { API_BASE_URL } from '@/config'
 import { CHAT_ENDPOINTS } from './endpoints'
-import {
-  resolveAccessToken,
-  refreshAccessToken,
-} from './request'
+import request, { resolveAccessToken, refreshAccessToken } from './request'
 
 export interface ChatStreamOptions {
   chat_id: string
@@ -13,6 +10,22 @@ export interface ChatStreamOptions {
   onMessage: (chunk: string) => void
   onDone?: () => void
   onError?: (error: Error) => void
+}
+
+export interface ChatSession {
+  created_at: string
+  session_id: string
+  title: string
+}
+
+export interface ChatMessageDTO {
+  content: string
+  role: 'user' | 'assistant'
+}
+
+export interface ChatSessionMessages {
+  session_id: string
+  messages: ChatMessageDTO[]
 }
 
 const RETRY_AFTER_REFRESH = 'RETRY_AFTER_REFRESH'
@@ -143,4 +156,18 @@ export async function chatStreamAPI(options: ChatStreamOptions): Promise<void> {
     }
     throw err
   }
+}
+
+export async function getChatSessionsAPI(): Promise<ChatSession[]> {
+  const { data } = await request.get<ChatSession[]>(CHAT_ENDPOINTS.sessions)
+  return data ?? []
+}
+
+export async function getChatSessionMessagesAPI(
+  sessionId: string
+): Promise<ChatSessionMessages> {
+  const { data } = await request.get<ChatSessionMessages>(
+    `${CHAT_ENDPOINTS.sessions}/${encodeURIComponent(sessionId)}/messages`
+  )
+  return data
 }
