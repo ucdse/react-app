@@ -14,10 +14,7 @@ interface WeatherData {
   }>
 }
 
-interface WeatherProps {
-  lat: number | null
-  lon: number | null
-}
+
 
 type UnknownObject = Record<string, unknown>
 
@@ -196,11 +193,11 @@ function formatTime(timeString: string | number | Date | undefined): string {
     } else {
       date = timeString
     }
-    
+
     if (isNaN(date.getTime())) {
       return '00:00'
     }
-    
+
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
   } catch {
     return '00:00'
@@ -229,7 +226,7 @@ function processWeatherData(data: unknown): WeatherData {
     let forecast: WeatherData['forecast'] = []
     if (Array.isArray(dataObj.hourly)) {
       forecast = dataObj.hourly
-        .slice(0, 5)
+        .slice(1, 6) // Skip the first element which is `current`, take the next 5 hours
         .map((item: unknown): WeatherData['forecast'][number] | null => {
           const hour = asObject(item)
           if (!hour) return null
@@ -280,34 +277,30 @@ function processWeatherData(data: unknown): WeatherData {
   return fallback
 }
 
-export default function Weather({ lat, lon }: WeatherProps) {
+export default function Weather() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const hasLocation = lat !== null && lon !== null
-  const displayWeatherData = hasLocation ? weatherData : createFallbackWeatherData()
+
+  // 组件加载就去拉取数据，因为不再依赖地理定位
+  const displayWeatherData = weatherData || createFallbackWeatherData()
 
   useEffect(() => {
-    if (!hasLocation) {
-      return
-    }
-
     let cancelled = false
     Promise.resolve()
       .then(() => {
         if (cancelled) return null
         setLoading(true)
         setError(null)
-        return getWeatherAPI(lat, lon)
+        // 无需参数
+        return getWeatherAPI()
       })
       .then((data) => {
         if (cancelled || !data) return
 
-        // 打印返回的数据以便查看格式
         console.log('Weather API Response:', data)
 
-        // 根据实际返回的数据格式处理
-        // 这里先使用通用处理逻辑，等看到实际数据后再优化
+        // 使用通用处理逻辑，后端已处理好格式
         const processedData = processWeatherData(data)
         setWeatherData(processedData)
       })
@@ -315,8 +308,6 @@ export default function Weather({ lat, lon }: WeatherProps) {
         if (cancelled) return
         console.error('Weather API Error:', err)
         setError(err instanceof Error ? err.message : '获取天气数据失败')
-        // 出错时使用默认数据
-        setWeatherData(createFallbackWeatherData())
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -325,10 +316,10 @@ export default function Weather({ lat, lon }: WeatherProps) {
     return () => {
       cancelled = true
     }
-  }, [hasLocation, lat, lon])
+  }, [])
 
   // 加载中：不显示任何数字，只显示加载样式
-  if ((hasLocation && loading) || !displayWeatherData) {
+  if (loading || !weatherData) {
     return (
       <div>
         <div className="rounded-xl p-3 mb-4 flex items-center justify-center border border-gray-200/60 min-h-[72px]">
@@ -355,7 +346,7 @@ export default function Weather({ lat, lon }: WeatherProps) {
 
   return (
     <div>
-      {hasLocation && error && (
+      {error && (
         <div className="text-center text-red-500 text-xs mb-2">{error}</div>
       )}
       {/* 当前天气部分 */}
