@@ -1,6 +1,8 @@
+/// <reference types="@types/google.maps" />
 import { useEffect, useRef, useState } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { getStationsAPI, getStationAvailabilityAPI, getStationsStatusAPI, type StationVO, type StationAvailabilityVO } from '@/api/station'
+import { planJourneyAPI, type JourneyPlanResponse } from '@/api/journey'
 import Weather from '@/components/Weather'
 
 // ========== Google Maps API 相关常量 ==========
@@ -70,6 +72,22 @@ export default function Maps() {
   const [stationHistory, setStationHistory] = useState<StationAvailabilityVO[]>([])
   const [detailLoading, setDetailLoading] = useState(false)
 
+  // Journey Planner State
+  const startInputRef = useRef<HTMLInputElement>(null)
+  const endInputRef = useRef<HTMLInputElement>(null)
+  const [startPoint, setStartPoint] = useState<{ lat: number; lng: number, address: string } | null>(null)
+  const [endPoint, setEndPoint] = useState<{ lat: number; lng: number, address: string } | null>(null)
+  const [journeyLoading, setJourneyLoading] = useState(false)
+  const [journeyError, setJourneyError] = useState<string | null>(null)
+  const [journeyResult, setJourneyResult] = useState<JourneyPlanResponse | null>(null)
+
+  // References to Direction Renderers to clear them later
+  const directionsRenderersRef = useRef<google.maps.DirectionsRenderer[]>([])
+  // References for custom route markers
+  const journeyMarkersRef = useRef<HTMLElement[]>([])
+
+
+
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
   const keyError =
     !apiKey || typeof apiKey !== 'string' || !apiKey.startsWith('AIza')
@@ -94,7 +112,7 @@ export default function Maps() {
     window[GOOGLE_MAPS_CALLBACK] = () => setScriptLoaded(true)
 
     const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=${GOOGLE_MAPS_CALLBACK}&libraries=maps,marker&v=beta`
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=${GOOGLE_MAPS_CALLBACK}&libraries=maps,marker,places,routes&language=en&v=beta`
     script.async = true
     script.onerror = () => setLoadError('Google Maps 脚本加载失败')
     document.head.appendChild(script)
@@ -174,6 +192,38 @@ export default function Maps() {
 
     const container = mapContainerRef.current
     container.innerHTML = ''
+
+    // Setup Autocomplete
+    if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+      if (startInputRef.current && !startInputRef.current.dataset.hasAutocomplete) {
+        const startAutocomplete = new google.maps.places.Autocomplete(startInputRef.current)
+        startAutocomplete.addListener('place_changed', () => {
+          const place = startAutocomplete.getPlace()
+          if (place.geometry && place.geometry.location) {
+            setStartPoint({
+              lat: place.geometry.location.lat(),
+              lng: place.geometry.location.lng(),
+              address: place.formatted_address || place.name || ''
+            })
+          }
+        })
+        startInputRef.current.dataset.hasAutocomplete = 'true'
+      }
+      if (endInputRef.current && !endInputRef.current.dataset.hasAutocomplete) {
+        const endAutocomplete = new google.maps.places.Autocomplete(endInputRef.current)
+        endAutocomplete.addListener('place_changed', () => {
+          const place = endAutocomplete.getPlace()
+          if (place.geometry && place.geometry.location) {
+            setEndPoint({
+              lat: place.geometry.location.lat(),
+              lng: place.geometry.location.lng(),
+              address: place.formatted_address || place.name || ''
+            })
+          }
+        })
+        endInputRef.current.dataset.hasAutocomplete = 'true'
+      }
+    }
 
     const center = userPosition
       ? `${userPosition.lat},${userPosition.lng}`
@@ -442,6 +492,125 @@ export default function Maps() {
   }, [selectedStation])
 
 
+  // 监听 journeyResult 改变，绘制路线
+  useEffect(() => {
+    if (!scriptLoaded || !mapContainerRef.current) return
+    const mapEl = mapContainerRef.current.querySelector('gmp-map') as HTMLElement & { innerMap?: google.maps.Map }
+    if (!mapEl || !mapEl.innerMap || typeof google === 'undefined') return
+
+    // 每次绘制前，清除旧的路线
+    directionsRenderersRef.current.forEach(renderer => renderer.setMap(null))
+    directionsRenderersRef.current = []
+
+    // 清除自定义路线 markers
+    journeyMarkersRef.current.forEach(marker => marker.remove())
+    journeyMarkersRef.current = []
+
+    if (!journeyResult) return
+
+    const { route_info, search_context } = journeyResult
+    const directionsService = new google.maps.DirectionsService()
+
+    const drawRoute = (origin: google.maps.LatLngLiteral, destination: google.maps.LatLngLiteral, travelMode: string, polylineOptions: google.maps.PolylineOptions) => {
+      const renderer = new google.maps.DirectionsRenderer({
+        map: mapEl.innerMap,
+        suppressMarkers: true,
+        preserveViewport: true,
+        polylineOptions
+      })
+      directionsRenderersRef.current.push(renderer)
+
+      directionsService.route(
+        {
+          origin,
+          destination,
+          travelMode: travelMode as google.maps.TravelMode
+        },
+        (result: google.maps.DirectionsResult | null, status: google.maps.DirectionsStatus) => {
+          if (status === 'OK' && result) {
+            renderer.setDirections(result)
+          } else {
+            console.error(`Directions request failed due to ${status}`)
+          }
+        }
+      )
+    }
+
+    // 第一段：步行 (起點 -> 第一個車站)
+    drawRoute(
+      { lat: search_context.start_resolved.lat, lng: search_context.start_resolved.lon },
+      { lat: route_info.start_station.coords.lat, lng: route_info.start_station.coords.lon },
+      'WALKING',
+      {
+        strokeOpacity: 0,
+        icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1.0, scale: 3, strokeColor: '#7c3aed', strokeWeight: 5 }, offset: '0', repeat: '16px' }]
+      }
+    )
+
+    // 第二段：騎車 (第一個車站 -> 第二個車站)
+    drawRoute(
+      { lat: route_info.start_station.coords.lat, lng: route_info.start_station.coords.lon },
+      { lat: route_info.end_station.coords.lat, lng: route_info.end_station.coords.lon },
+      'BICYCLING',
+      { strokeColor: '#059669', strokeOpacity: 1.0, strokeWeight: 8 }
+    )
+
+    // 第三段：步行 (第二個車站 -> 終點)
+    drawRoute(
+      { lat: route_info.end_station.coords.lat, lng: route_info.end_station.coords.lon },
+      { lat: search_context.end_resolved.lat, lng: search_context.end_resolved.lon },
+      'WALKING',
+      {
+        strokeOpacity: 0,
+        icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1.0, scale: 3, strokeColor: '#7c3aed', strokeWeight: 5 }, offset: '0', repeat: '16px' }]
+      }
+    )
+
+    // 绘制自定义的 4 个关键点 Markers
+    const createMarker = (position: google.maps.LatLngLiteral, title: string, isStation: boolean) => {
+      const marker = document.createElement('gmp-advanced-marker')
+      marker.setAttribute('position', `${position.lat},${position.lng}`)
+      marker.setAttribute('title', title)
+      
+      // 🌟 關鍵：設定超高 z-index，讓它直接疊加蓋住原本會變色的動態站點
+      marker.style.zIndex = '999999'
+
+      const iconDiv = document.createElement('div')
+
+      if (isStation) {
+        // 如果是旅程中的站點：顯示綠色大腳踏車 Icon (直接覆蓋在原站點上)
+        iconDiv.className = 'relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-emerald-500 text-white shadow-[0_0_15px_rgba(0,0,0,0.3)]'
+        iconDiv.innerHTML = `
+          <svg viewBox="0 0 80 80" fill="currentColor" stroke="currentColor" stroke-width="2" class="h-6 w-6">
+            <path d="M63,34a16,16,0,0,0-3.19.32L57,23.87V16h8a1,1,0,0,0,0-2H56a1,1,0,0,0-1,1v8H31V20h5a1,1,0,0,0,0-2H24a1,1,0,0,0,0,2h5v3.76L23.25,35.27A16,16,0,1,0,33,51h7a1,1,0,0,0,.85-.48l14.79-24,2.25,8.35A16,16,0,1,0,63,34ZM17,64a14,14,0,0,1,0-28,13.84,13.84,0,0,1,5.35,1.07L16.11,49.55A1,1,0,0,0,17,51H31A14,14,0,0,1,17,64Zm1.62-15,5.51-11A14,14,0,0,1,31,49Zm20.82,0H33A16,16,0,0,0,25,36.18L30.62,25H54.21ZM63,64a14,14,0,0,1-4.59-27.21L62,50.26A1,1,0,0,0,63,51a1.15,1.15,0,0,0,.26,0A1,1,0,0,0,64,49.74L60.34,36.26A13.71,13.71,0,0,1,63,36a14,14,0,0,1,0,28Z"/>
+          </svg>
+        `
+      } else {
+        // 如果是純起點/終點：顯示小紅點
+        iconDiv.className = 'h-5 w-5 rounded-full border-4 border-white bg-red-500 shadow-md'
+      }
+
+      marker.appendChild(iconDiv)
+      mapEl.appendChild(marker)
+      journeyMarkersRef.current.push(marker)
+    }
+
+    createMarker({ lat: search_context.start_resolved.lat, lng: search_context.start_resolved.lon }, 'Start', false)
+    createMarker({ lat: route_info.start_station.coords.lat, lng: route_info.start_station.coords.lon }, route_info.start_station.name, true)
+    createMarker({ lat: route_info.end_station.coords.lat, lng: route_info.end_station.coords.lon }, route_info.end_station.name, true)
+    createMarker({ lat: search_context.end_resolved.lat, lng: search_context.end_resolved.lon }, 'End', false)
+
+    // 缩放地图到包含所有路线点
+    const bounds = new google.maps.LatLngBounds()
+    bounds.extend({ lat: search_context.start_resolved.lat, lng: search_context.start_resolved.lon })
+    bounds.extend({ lat: route_info.start_station.coords.lat, lng: route_info.start_station.coords.lon })
+    bounds.extend({ lat: route_info.end_station.coords.lat, lng: route_info.end_station.coords.lon })
+    bounds.extend({ lat: search_context.end_resolved.lat, lng: search_context.end_resolved.lon })
+
+    mapEl.innerMap.fitBounds(bounds, { top: 80, bottom: 80, left: 340, right: 80 })
+
+  }, [journeyResult, scriptLoaded, stations])
+
   const handleLocate = () => {
     if (!navigator.geolocation) {
       setLocationError('当前浏览器不支持定位')
@@ -463,6 +632,33 @@ export default function Maps() {
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     )
+  }
+
+  const handlePlanJourney = async () => {
+    if (!startPoint || !endPoint) {
+      setJourneyError('Please select both Start and End points from the dropdown.')
+      return
+    }
+
+    setJourneyLoading(true)
+    setJourneyError(null)
+    setJourneyResult(null)
+
+    try {
+      const response = await planJourneyAPI({
+        start: { lat: startPoint.lat, lon: startPoint.lng },
+        end: { lat: endPoint.lat, lon: endPoint.lng }
+      })
+      setJourneyResult(response.data)
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setJourneyError(err.message || 'Failed to plan journey.')
+      } else {
+        setJourneyError('Failed to plan journey.')
+      }
+    } finally {
+      setJourneyLoading(false)
+    }
   }
 
   return (
@@ -564,10 +760,55 @@ export default function Maps() {
         <div className="flex-1 min-h-0" />
 
         {/* 分割线 */}
+        <div className="my-3 border-t border-gray-200/60" />
+
+        {/* Journey Planner */}
+        <div className="mb-3">
+          <div className="text-sm font-semibold text-foreground mb-2">Journey Planner</div>
+          <div className="space-y-2">
+            <input
+              ref={startInputRef}
+              type="text"
+              placeholder="Start Point"
+              className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-600"
+              onChange={(e) => {
+                if (!e.target.value) setStartPoint(null)
+              }}
+            />
+            <input
+              ref={endInputRef}
+              type="text"
+              placeholder="End Point"
+              className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-600"
+              onChange={(e) => {
+                if (!e.target.value) setEndPoint(null)
+              }}
+            />
+            <button
+              type="button"
+              onClick={handlePlanJourney}
+              disabled={journeyLoading || !startPoint || !endPoint}
+              className="w-full inline-flex items-center justify-center rounded-xl bg-violet-600 px-3 py-2 text-sm font-medium text-white shadow transition hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {journeyLoading ? 'Planning...' : 'Plan Journey'}
+            </button>
+            {journeyError && <div className="text-xs text-amber-600 text-center">{journeyError}</div>}
+            {journeyResult && (
+              <div className="mt-2 text-xs border border-green-200 bg-green-50 p-2 rounded-md">
+                <div className="font-semibold text-green-800">Journey Found</div>
+                <div className="text-green-700 mt-1">Total Time: {Math.ceil(journeyResult.route_info.total_duration / 60)} mins</div>
+                <div className="text-green-700 mt-1 truncate">Start Station: {journeyResult.route_info.start_station.name}</div>
+                <div className="text-green-700 mt-1 truncate">End Station: {journeyResult.route_info.end_station.name}</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 分割线 */}
         <div className="mb-3 border-t border-gray-200/60" />
 
         {/* 天气 */}
-        <Weather lat={userPosition?.lat ?? null} lon={userPosition?.lng ?? null} />
+        <Weather />
       </div>
 
 
@@ -674,7 +915,7 @@ export default function Maps() {
                       {/* X軸：將時間格式化為 小時:分鐘 */}
                       <XAxis
                         dataKey="requested_at"
-                        tickFormatter={(tick) => {
+                        tickFormatter={(tick: string | number) => {
                           if (!tick) return '';
                           const d = new Date(tick);
                           return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;

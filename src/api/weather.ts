@@ -7,16 +7,9 @@ export interface WeatherResponse {
 }
 
 /**
- * 获取天气数据
- * @param lat 纬度
- * @param lon 经度
+ * 获取天气数据 (后端统一返回都柏林数据)
  */
-export const getWeatherAPI = async (lat: number, lon: number): Promise<WeatherResponse> => {
-  const res = await request.get<WeatherResponse>(WEATHER_ENDPOINTS.get, {
-    params: {
-      lat: String(lat),
-      lon: String(lon),
-    },
-  })
+export const getWeatherAPI = async (): Promise<WeatherResponse> => {
+  const res = await request.get<WeatherResponse>(WEATHER_ENDPOINTS.get)
   return res.data
 }
