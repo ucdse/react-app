@@ -69,3 +69,29 @@ export const getStationAvailabilityAPI = async (number: number): Promise<Station
     return []; 
   }
 }
+
+
+export const getStationsStatusAPI = async (): Promise<StationAvailabilityVO[]> => {
+  try {
+    const res = await request.get<unknown>('/api/stations/status')
+    
+    // 加上 : unknown 讓 TypeScript 知道我們要手動剝除外層
+    let actualData: unknown = res;
+
+    // 1. 剝除第一層：Axios 的 response.data wrapper (如果有的話)
+    if (actualData !== null && typeof actualData === 'object' && 'data' in actualData) {
+      actualData = (actualData as Record<string, unknown>).data;
+    }
+
+    // 2. 剝除第二層：Flask 後端的 { code: 0, data: [...] } wrapper
+    if (actualData !== null && typeof actualData === 'object' && !Array.isArray(actualData) && 'data' in actualData) {
+      actualData = (actualData as Record<string, unknown>).data;
+    }
+
+    // 3. 確保最後拿到的是陣列
+    return Array.isArray(actualData) ? actualData : [];
+  } catch (error) {
+    console.error('Failed to fetch all stations status:', error);
+    return [];
+  }
+}

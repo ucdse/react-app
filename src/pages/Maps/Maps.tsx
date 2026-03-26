@@ -1,7 +1,7 @@
 /// <reference types="@types/google.maps" />
 import { useEffect, useRef, useState } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { getStationsAPI, getStationAvailabilityAPI, type StationVO, type StationAvailabilityVO } from '@/api/station'
+import { getStationsAPI, getStationAvailabilityAPI, getStationsStatusAPI, type StationVO, type StationAvailabilityVO } from '@/api/station'
 import { planJourneyAPI, type JourneyPlanResponse } from '@/api/journey'
 import Weather from '@/components/Weather'
 
@@ -64,6 +64,7 @@ export default function Maps() {
   const [stationsLoading, setStationsLoading] = useState(true)
   const [stationsError, setStationsError] = useState<string | null>(null)
   const [panelOpen, setPanelOpen] = useState(true)
+  const [stationsStatus, setStationsStatus] = useState<Record<number, StationAvailabilityVO>>({})
 
   const [selectedStation, setSelectedStation] = useState<StationVO | null>(null)
   const [stationDetail, setStationDetail] = useState<StationAvailabilityVO | null>(null)
@@ -128,9 +129,20 @@ export default function Maps() {
       setStationsLoading(true)
       setStationsError(null)
     })
-    getStationsAPI()
-      .then((data) => {
-        if (!cancelled) setStations(data)
+    
+    // 同時發出兩個 API 請求
+    Promise.all([getStationsAPI(), getStationsStatusAPI()])
+      .then(([stationsData, statusData]) => {
+        if (!cancelled) {
+          setStations(stationsData)
+          
+          // 將 status 陣列轉換成 Object 字典：{ 站點編號: 狀態資料 }
+          const statusMap: Record<number, StationAvailabilityVO> = {}
+          statusData.forEach(st => {
+            statusMap[st.number] = st
+          })
+          setStationsStatus(statusMap)
+        }
       })
       .catch((err) => {
         if (!cancelled) setStationsError(err instanceof Error ? err.message : '获取站点失败')
@@ -138,6 +150,7 @@ export default function Maps() {
       .finally(() => {
         if (!cancelled) setStationsLoading(false)
       })
+      
     return () => {
       cancelled = true
     }
@@ -300,9 +313,22 @@ export default function Maps() {
       markerContent.tabIndex = 0
       markerContent.setAttribute('aria-label', s.name)
 
+      const currentStatus = stationsStatus[s.number]
+
+      let bgColorClass = 'bg-gray-400' // 預設顏色：灰
+      if (currentStatus) {
+        if (currentStatus.available_bikes === 0) {
+          bgColorClass = 'bg-red-500' // 沒車 -> 紅色
+        } else if (currentStatus.available_bikes <= 5) {
+          bgColorClass = 'bg-orange-500' // 即將沒車 (5台以下) -> 橘色
+        } else {
+          bgColorClass = 'bg-[#a3c661]' // 5台以上 -> 綠色 (沿用你原本好看的主題綠)
+        }
+      }
+
       const bikeIcon = document.createElement('div')
-      bikeIcon.className =
-        'relative z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-violet-600 text-white shadow-sm'
+      bikeIcon.className = `relative z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white text-white shadow-sm ${bgColorClass}`
+
       bikeIcon.innerHTML = `
         <svg viewBox="0 0 80 80" fill="currentColor" stroke="currentColor" stroke-width="2" class="h-4 w-4">
           <path d="M63,34a16,16,0,0,0-3.19.32L57,23.87V16h8a1,1,0,0,0,0-2H56a1,1,0,0,0-1,1v8H31V20h5a1,1,0,0,0,0-2H24a1,1,0,0,0,0,2h5v3.76L23.25,35.27A16,16,0,1,0,33,51h7a1,1,0,0,0,.85-.48l14.79-24,2.25,8.35A16,16,0,1,0,63,34ZM17,64a14,14,0,0,1,0-28,13.84,13.84,0,0,1,5.35,1.07L16.11,49.55A1,1,0,0,0,17,51H31A14,14,0,0,1,17,64Zm1.62-15,5.51-11A14,14,0,0,1,31,49Zm20.82,0H33A16,16,0,0,0,25,36.18L30.62,25H54.21ZM63,64a14,14,0,0,1-4.59-27.21L62,50.26A1,1,0,0,0,63,51a1.15,1.15,0,0,0,.26,0A1,1,0,0,0,64,49.74L60.34,36.26A13.71,13.71,0,0,1,63,36a14,14,0,0,1,0,28Z"/>
@@ -322,19 +348,25 @@ export default function Maps() {
       address.title = s.address
       address.textContent = s.address
 
-      const numberLine = document.createElement('div')
-      numberLine.className = 'mt-1 text-xs text-muted-foreground'
-      numberLine.textContent = `Station No.: ${s.number}`
+      
+
+      const bikesLine = document.createElement('div')
+      bikesLine.className = 'mt-2 text-sm font-semibold text-[#a3c661]'
+      bikesLine.textContent = currentStatus 
+        ? `🚲 Bikes: ${currentStatus.available_bikes}` 
+        : '🚲 Bikes: --'
 
       const standsLine = document.createElement('div')
-      standsLine.className = 'mt-1 text-xs text-muted-foreground'
-      standsLine.textContent = `Docks: ${s.bike_stands}`
+      standsLine.className = 'mt-1 text-sm font-semibold text-[#f1c25f]'
+      standsLine.textContent = currentStatus 
+        ? `🅿️ Stands: ${currentStatus.available_bike_stands}` 
+        : '🅿️ Stands: --'
 
       const arrow = document.createElement('div')
       arrow.className =
         'absolute left-1/2 top-full h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-r border-b border-border bg-background/95'
 
-      tooltip.append(title, address, numberLine, standsLine, arrow)
+      tooltip.append(title, bikesLine, standsLine, arrow)
       markerContent.append(bikeIcon, tooltip)
 
       const openStationInfo = () => showTooltip(marker, tooltip)
@@ -413,7 +445,7 @@ export default function Maps() {
       }
     }
     setTimeout(applyMapOptions, 0)
-  }, [scriptLoaded, userPosition, stations])
+  }, [scriptLoaded, userPosition, stations, stationsStatus])
 
 
   // 在點擊站點時，跟 Flask 後端要即時車位資料與歷史紀錄
@@ -536,54 +568,29 @@ export default function Maps() {
 
     // 绘制自定义的 4 个关键点 Markers
     const createMarker = (position: google.maps.LatLngLiteral, title: string, isStation: boolean) => {
-      if (isStation) {
-        // 尝试找到已经渲染的紫色站点 Marker
-        const originalMarker = Array.from(mapEl.querySelectorAll('gmp-advanced-marker')).find(m => m.getAttribute('title') === title) as HTMLElement;
-        if (originalMarker) {
-          const markerContent = originalMarker.firstElementChild as HTMLElement;
-          if (markerContent) {
-            const bikeIcon = markerContent.firstElementChild as HTMLElement;
-            if (bikeIcon) {
-              // 备份原有的 class 和 innerHTML，以便离开 Journey Planner 时恢复
-              const originalClassName = bikeIcon.className;
-              const originalInnerHTML = bikeIcon.innerHTML;
-              const originalZIndex = originalMarker.style.zIndex;
-
-              // 修改为旅程中的绿色大 Icon
-              bikeIcon.className = 'relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-emerald-500 text-white shadow-[0_0_15px_rgba(0,0,0,0.3)]'
-              bikeIcon.innerHTML = `
-                <svg viewBox="0 0 80 80" fill="currentColor" stroke="currentColor" stroke-width="2" class="h-6 w-6">
-                  <path d="M63,34a16,16,0,0,0-3.19.32L57,23.87V16h8a1,1,0,0,0,0-2H56a1,1,0,0,0-1,1v8H31V20h5a1,1,0,0,0,0-2H24a1,1,0,0,0,0,2h5v3.76L23.25,35.27A16,16,0,1,0,33,51h7a1,1,0,0,0,.85-.48l14.79-24,2.25,8.35A16,16,0,1,0,63,34ZM17,64a14,14,0,0,1,0-28,13.84,13.84,0,0,1,5.35,1.07L16.11,49.55A1,1,0,0,0,17,51H31A14,14,0,0,1,17,64Zm1.62-15,5.51-11A14,14,0,0,1,31,49Zm20.82,0H33A16,16,0,0,0,25,36.18L30.62,25H54.21ZM63,64a14,14,0,0,1-4.59-27.21L62,50.26A1,1,0,0,0,63,51a1.15,1.15,0,0,0,.26,0A1,1,0,0,0,64,49.74L60.34,36.26A13.71,13.71,0,0,1,63,36a14,14,0,0,1,0,28Z"/>
-                </svg>
-              `
-              originalMarker.setAttribute('z-index', '999999');
-              originalMarker.style.zIndex = '999999';
-
-              // 推入一个带 remove 方法的假对象，以在清理时恢复紫色图标
-              journeyMarkersRef.current.push({
-                remove: () => {
-                   bikeIcon.className = originalClassName;
-                   bikeIcon.innerHTML = originalInnerHTML;
-                   originalMarker.setAttribute('z-index', originalZIndex || '1');
-                   originalMarker.style.zIndex = originalZIndex || '1';
-                }
-              } as unknown as HTMLElement);
-              return; // 直接返回，不再创建新的 Marker
-            }
-          }
-        }
-      }
-
-      // 非站点的关键点（起点/终点坐标），创建纯显示的小红点
       const marker = document.createElement('gmp-advanced-marker')
       marker.setAttribute('position', `${position.lat},${position.lng}`)
       marker.setAttribute('title', title)
-      marker.style.zIndex = '999998'
-
-      const pointDiv = document.createElement('div')
-      pointDiv.className = 'h-5 w-5 rounded-full border-4 border-white bg-red-500 shadow-md'
-      marker.appendChild(pointDiv)
       
+      // 🌟 關鍵：設定超高 z-index，讓它直接疊加蓋住原本會變色的動態站點
+      marker.style.zIndex = '999999'
+
+      const iconDiv = document.createElement('div')
+
+      if (isStation) {
+        // 如果是旅程中的站點：顯示綠色大腳踏車 Icon (直接覆蓋在原站點上)
+        iconDiv.className = 'relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-emerald-500 text-white shadow-[0_0_15px_rgba(0,0,0,0.3)]'
+        iconDiv.innerHTML = `
+          <svg viewBox="0 0 80 80" fill="currentColor" stroke="currentColor" stroke-width="2" class="h-6 w-6">
+            <path d="M63,34a16,16,0,0,0-3.19.32L57,23.87V16h8a1,1,0,0,0,0-2H56a1,1,0,0,0-1,1v8H31V20h5a1,1,0,0,0,0-2H24a1,1,0,0,0,0,2h5v3.76L23.25,35.27A16,16,0,1,0,33,51h7a1,1,0,0,0,.85-.48l14.79-24,2.25,8.35A16,16,0,1,0,63,34ZM17,64a14,14,0,0,1,0-28,13.84,13.84,0,0,1,5.35,1.07L16.11,49.55A1,1,0,0,0,17,51H31A14,14,0,0,1,17,64Zm1.62-15,5.51-11A14,14,0,0,1,31,49Zm20.82,0H33A16,16,0,0,0,25,36.18L30.62,25H54.21ZM63,64a14,14,0,0,1-4.59-27.21L62,50.26A1,1,0,0,0,63,51a1.15,1.15,0,0,0,.26,0A1,1,0,0,0,64,49.74L60.34,36.26A13.71,13.71,0,0,1,63,36a14,14,0,0,1,0,28Z"/>
+          </svg>
+        `
+      } else {
+        // 如果是純起點/終點：顯示小紅點
+        iconDiv.className = 'h-5 w-5 rounded-full border-4 border-white bg-red-500 shadow-md'
+      }
+
+      marker.appendChild(iconDiv)
       mapEl.appendChild(marker)
       journeyMarkersRef.current.push(marker)
     }
