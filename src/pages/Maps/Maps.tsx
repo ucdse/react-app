@@ -443,6 +443,7 @@ export default function Maps() {
         setStationDetail(null)
 
         setTimeRange('history')
+        setHistoryRange('4h')
         setPredictionData([])
         setChartLoading(false)
 
@@ -455,6 +456,7 @@ export default function Maps() {
         setStationDetail(null)
 
         setTimeRange('history')
+        setHistoryRange('4h')
         setPredictionData([])
         setChartLoading(false)
 
@@ -948,23 +950,40 @@ export default function Maps() {
               <div className="flex flex-col bg-[#9fbab8] text-white">
                 {/* 第一排：歷史 vs 預測 */}
                 <div className="flex border-b border-white/20">
+                  {/* 左側：歷史紀錄分頁 */}
                   <button 
-                    className={`flex-1 py-1.5 text-center text-sm font-medium transition-colors ${timeRange === 'history' ? 'bg-black/10' : 'hover:bg-black/5'}`}
+                    className={`flex-1 py-1.5 text-center text-sm transition-colors ${
+                      timeRange === 'history' 
+                        ? 'bg-white text-gray-800 font-bold' // 啟用時：白底深灰字
+                        : 'text-white hover:bg-black/10'     // 未啟用時：透明底白字
+                    }`}
                     onClick={() => setTimeRange('history')}
                   >
                     Historic Data
                   </button>
-                  <div className="flex-1 relative flex items-center bg-white text-gray-700">
+                  
+                  {/* 右側：預測模型下拉分頁 */}
+                  <div 
+                    className={`flex-1 relative flex items-center transition-colors ${
+                      timeRange !== 'history' 
+                        ? 'bg-white text-[#8b5cf6] font-bold' // 啟用時：白底紫字，強調預測感
+                        : 'text-white hover:bg-black/10'      // 未啟用時：透明底白字
+                    }`}
+                  >
                     <select 
-                      value={timeRange === 'history' ? 'future_4h' : timeRange} // 預設顯示未來選項
+                      value={timeRange === 'history' ? 'placeholder' : timeRange} 
                       onChange={(e) => setTimeRange(e.target.value as 'future_4h' | 'future_24h')}
-                      className="w-full h-full py-1.5 px-3 text-center text-sm bg-transparent appearance-none cursor-pointer focus:outline-none hover:bg-gray-50 transition-colors"
+                      className="w-full h-full py-1.5 px-3 text-center text-sm bg-transparent appearance-none cursor-pointer focus:outline-none"
                     >
-                      <option value="future_4h" disabled={timeRange === 'history'} className="hidden">Prediction Model 🔮</option>
-                      <option value="future_4h">Future 4 Hours 🔮</option>
-                      <option value="future_24h">Future 24 Hours 🔮</option>
+                      {/* 當在歷史模式時，才顯示這個佔位符，並隱藏不給選 */}
+                      {timeRange === 'history' && (
+                        <option value="placeholder" disabled hidden>Prediction Model 🔮</option>
+                      )}
+                      {/* 真實的預測選項 */}
+                      <option value="future_4h" className="text-gray-700 font-normal">Future 4 Hours 🔮</option>
+                      <option value="future_24h" className="text-gray-700 font-normal">Future 24 Hours 🔮</option>
                     </select>
-                    <span className="absolute right-3 pointer-events-none text-gray-400 text-xs">▼</span>
+                    <span className="absolute right-3 pointer-events-none text-xs opacity-70">▼</span>
                   </div>
                 </div>
 
