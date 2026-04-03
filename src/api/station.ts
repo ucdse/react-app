@@ -95,3 +95,64 @@ export const getStationsStatusAPI = async (): Promise<StationAvailabilityVO[]> =
     return [];
   }
 }
+
+
+/** 預測資料（與後端回傳的 JSON 結構一致） */
+export interface PredictionResponseVO {
+  forecast_time: string;
+  predicted_available_bikes: number;
+}
+
+/** 轉換後給 Recharts 圖表使用的統一格式 */
+export interface ChartData {
+  timeLabel: string;     // X 軸顯示的時間，例如 "20:00"
+  bikes: number;         // Y 軸的單車數量
+  isPrediction: boolean; // 標記是否為預測數據 (用來改變圖表樣式)
+}
+
+/**
+ * 獲取站點未來的單車預測數量
+ * @param number 站點 ID
+ * @param hours 想要截取的未來小時數 (例如 4 或 24)
+ */
+export const getStationPredictionAPI = async (number: number, hours: number): Promise<ChartData[]> => {
+  try {
+    const res = await request.get<unknown>(`/api/stations/${number}/prediction`);
+    
+    let actualData: unknown = res;
+
+    // 1. 剝除第一層：Axios 的 response.data wrapper (如果有的話)
+    if (actualData !== null && typeof actualData === 'object' && 'data' in actualData) {
+      actualData = (actualData as Record<string, unknown>).data;
+    }
+
+    // 2. 剝除第二層：Flask 後端的 { code: 0, data: [...] } wrapper
+    if (actualData !== null && typeof actualData === 'object' && !Array.isArray(actualData) && 'data' in actualData) {
+      actualData = (actualData as Record<string, unknown>).data;
+    }
+
+    const finalData = actualData as PredictionResponseVO[];
+
+    if (!Array.isArray(finalData)) return [];
+
+    // 3. 根據使用者選擇的時間，截取對應的小時數
+    const slicedData = finalData.slice(0, hours);
+
+    // 4. 轉換成 Recharts 圖表需要的格式
+    return slicedData.map(item => {
+      const date = new Date(item.forecast_time);
+      const hoursStr = date.getHours().toString().padStart(2, '0');
+      const minutesStr = date.getMinutes().toString().padStart(2, '0');
+
+      return {
+        timeLabel: `${hoursStr}:${minutesStr}`,
+        bikes: item.predicted_available_bikes,
+        isPrediction: true // 加上預測標籤
+      };
+    });
+
+  } catch (error) {
+    console.error(`Failed to fetch prediction data for station ${number}:`, error);
+    return [];
+  }
+}

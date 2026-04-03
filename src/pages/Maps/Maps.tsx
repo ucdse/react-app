@@ -1,9 +1,10 @@
 /// <reference types="@types/google.maps" />
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { getStationsAPI, getStationAvailabilityAPI, getStationsStatusAPI, type StationVO, type StationAvailabilityVO } from '@/api/station'
+import { getStationsAPI, getStationAvailabilityAPI, getStationsStatusAPI, getStationPredictionAPI, type StationVO, type ChartData, type StationAvailabilityVO } from '@/api/station'
 import { planJourneyAPI, type JourneyPlanResponse } from '@/api/journey'
 import Weather from '@/components/Weather'
+
 
 // ========== Google Maps API 相关常量 ==========
 /** 全局回调名，供 Google Maps 脚本加载完成后调用 */
@@ -69,8 +70,59 @@ export default function Maps() {
   const [selectedStation, setSelectedStation] = useState<StationVO | null>(null)
   const [stationDetail, setStationDetail] = useState<StationAvailabilityVO | null>(null)
 
-  const [stationHistory, setStationHistory] = useState<StationAvailabilityVO[]>([])
+
   const [detailLoading, setDetailLoading] = useState(false)
+
+  // ========== 預測圖表相關 State ==========
+
+  // 1. 儲存 API 回傳的「所有」歷史資料 (30天)
+  const [fullStationHistory, setFullStationHistory] = useState<StationAvailabilityVO[]>([])
+  const [historyRange, setHistoryRange] = useState<'4h' | '1d' | '7d' | '30d'>('4h')
+
+  const [timeRange, setTimeRange] = useState<'history' | 'future_4h' | 'future_24h'>('history')
+  const [predictionData, setPredictionData] = useState<ChartData[]>([])
+  const [chartLoading, setChartLoading] = useState(false)
+
+  // 2. 使用 useMemo 動態過濾資料 (這樣切換按鈕時，不用重新發 API)
+  const filteredHistory = useMemo(() => {
+    if (fullStationHistory.length === 0) return [];
+
+    const now = Date.now();
+    return fullStationHistory.filter(item => {
+      // 解析時間 (相容數字或字串格式)
+      const num = Number(item.last_update);
+      const itemTime = !isNaN(num) ? num : new Date(String(item.last_update).replace(' ', 'T')).getTime();
+      
+      const diffMs = now - itemTime;
+      
+      // 根據選擇的範圍過濾
+      if (historyRange === '4h') return diffMs <= 4 * 60 * 60 * 1000;
+      if (historyRange === '1d') return diffMs <= 24 * 60 * 60 * 1000;
+      if (historyRange === '7d') return diffMs <= 7 * 24 * 60 * 60 * 1000;
+      return true; // 30d 就全給
+    });
+  }, [fullStationHistory, historyRange]);
+
+  // 當選擇「未來預測」時，呼叫後端 API
+  useEffect(() => {
+    if (!selectedStation || timeRange === 'history') return
+    
+    let cancelled = false
+    setChartLoading(true)
+    
+    const hours = timeRange === 'future_4h' ? 4 : 24
+    
+    getStationPredictionAPI(selectedStation.number, hours)
+      .then(data => {
+        if (!cancelled) setPredictionData(data)
+      })
+      .finally(() => {
+        if (!cancelled) setChartLoading(false)
+      })
+      
+    return () => { cancelled = true }
+  }, [selectedStation, timeRange])
+
 
   // Journey Planner State
   const startInputRef = useRef<HTMLInputElement>(null)
@@ -389,7 +441,10 @@ export default function Maps() {
 
         setDetailLoading(true)
         setStationDetail(null)
-        setStationHistory([])
+
+        setTimeRange('history')
+        setPredictionData([])
+        setChartLoading(false)
 
         setSelectedStation(s) // 更新選中的站點
       })
@@ -398,7 +453,11 @@ export default function Maps() {
 
         setDetailLoading(true)
         setStationDetail(null)
-        setStationHistory([])
+
+        setTimeRange('history')
+        setPredictionData([])
+        setChartLoading(false)
+
         setSelectedStation(s)
       })
 
@@ -448,30 +507,28 @@ export default function Maps() {
   }, [scriptLoaded, userPosition, stations, stationsStatus])
 
 
-  // 在點擊站點時，跟 Flask 後端要即時車位資料與歷史紀錄
+  // 在點擊站點時，跟 Flask 後端要「完整的」車位資料與歷史紀錄
   useEffect(() => {
     if (!selectedStation) return
     let cancelled = false
+    setDetailLoading(true)
+
+    // 這裡我們不傳 range 參數，直接拿全部
     getStationAvailabilityAPI(selectedStation.number)
       .then((data) => {
         if (!cancelled) {
           const parseTime = (val: number | string) => {
             const num = Number(val)
-            if (!isNaN(num)) {
-              return num
-            }
-            return new Date(String(val).replace(' ', 'T')).getTime()
+            return !isNaN(num) ? num : new Date(String(val).replace(' ', 'T')).getTime()
           }
 
-          // 1. 將資料依照時間戳 (last_update) 由舊到新序
-          const sortedData = [...data].sort((a, b) => {
-            return parseTime(a.last_update) - parseTime(b.last_update)
-          })
+          // 1. 將資料依照時間戳由舊到新排序
+          const sortedData = [...data].sort((a, b) => parseTime(a.last_update) - parseTime(b.last_update))
 
-          // 2. 把排序好的資料交給歷史圖表
-          setStationHistory(sortedData)
+          // 2. 把排序好的「完整資料」存進新的 State
+          setFullStationHistory(sortedData)
 
-          // 3. 排序過後，陣列的最後一筆就是時間最新的資料
+          // 3. 陣列的最後一筆就是最新資料
           if (sortedData.length > 0) {
             setStationDetail(sortedData[sortedData.length - 1])
           } else {
@@ -884,48 +941,94 @@ export default function Maps() {
                 : 'Updated: --'}
             </div>
 
-            {/* 歷史紀錄圖表區塊 */}
+            {/* 歷史圖表與預測區塊 */}
             <div className="overflow-hidden rounded-xl border border-gray-400">
-              <div className="flex items-center bg-[#9fbab8] text-white">
-                <button className="flex-1 py-1.5 text-center text-sm font-medium hover:bg-black/10 transition-colors">
-                  Historic Average
-                </button>
-                <button className="flex-1 border-l border-white/40 bg-white text-gray-700 py-1.5 text-center text-sm hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-                  <span className="text-gray-400">▼</span> Last 30 Days
-                </button>
+              
+              {/* === 頂部切換區 === */}
+              <div className="flex flex-col bg-[#9fbab8] text-white">
+                {/* 第一排：歷史 vs 預測 */}
+                <div className="flex border-b border-white/20">
+                  <button 
+                    className={`flex-1 py-1.5 text-center text-sm font-medium transition-colors ${timeRange === 'history' ? 'bg-black/10' : 'hover:bg-black/5'}`}
+                    onClick={() => setTimeRange('history')}
+                  >
+                    Historic Data
+                  </button>
+                  <div className="flex-1 relative flex items-center bg-white text-gray-700">
+                    <select 
+                      value={timeRange === 'history' ? 'future_4h' : timeRange} // 預設顯示未來選項
+                      onChange={(e) => setTimeRange(e.target.value as 'future_4h' | 'future_24h')}
+                      className="w-full h-full py-1.5 px-3 text-center text-sm bg-transparent appearance-none cursor-pointer focus:outline-none hover:bg-gray-50 transition-colors"
+                    >
+                      <option value="future_4h" disabled={timeRange === 'history'} className="hidden">Prediction Model 🔮</option>
+                      <option value="future_4h">Future 4 Hours 🔮</option>
+                      <option value="future_24h">Future 24 Hours 🔮</option>
+                    </select>
+                    <span className="absolute right-3 pointer-events-none text-gray-400 text-xs">▼</span>
+                  </div>
+                </div>
+
+                {/* 第二排：歷史範圍切換 (只有在選擇 History 時出現) */}
+                {timeRange === 'history' && (
+                  <div className="flex text-xs bg-black/10">
+                    {(['4h', '1d', '7d', '30d'] as const).map((range) => (
+                      <button
+                        key={range}
+                        onClick={() => setHistoryRange(range)}
+                        className={`flex-1 py-1.5 transition-colors border-r border-white/10 last:border-r-0 ${
+                          historyRange === range ? 'bg-white text-[#9fbab8] font-bold shadow-inner' : 'hover:bg-white/10 text-white/80'
+                        }`}
+                      >
+                        {range.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
+              {/* === 圖表渲染區 === */}
               <div className="h-56 w-full bg-white p-2">
-                {/* 👇 判斷如果有歷史資料，就渲染 Recharts 圖表 */}
-                {stationHistory.length > 0 ? (
+                {chartLoading ? (
+                  <div className="flex h-full w-full items-center justify-center text-gray-400 text-sm">
+                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent mr-2" />
+                    AI 模型預測中...
+                  </div>
+                ) : (timeRange === 'history' ? filteredHistory : predictionData).length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
-                      data={stationHistory}
+                      // 👈 這裡改成吃 filteredHistory
+                      data={timeRange === 'history' ? filteredHistory : predictionData}
                       margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
                     >
+                      {/* ... 中間的 defs, CartesianGrid, YAxis, Tooltip, Area 都跟你上一版完全一樣 ... */}
                       <defs>
-                        {/* 綠色漸層，呼應你的 Mockup 設計 */}
                         <linearGradient id="colorBikes" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#a3c661" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="#a3c661" stopOpacity={0} />
+                          <stop offset="5%" stopColor={timeRange === 'history' ? "#a3c661" : "#8b5cf6"} stopOpacity={0.8} />
+                          <stop offset="95%" stopColor={timeRange === 'history' ? "#a3c661" : "#8b5cf6"} stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
 
-                      {/* X軸：將時間格式化為 小時:分鐘 */}
                       <XAxis
-                        dataKey="requested_at"
+                        dataKey={timeRange === 'history' ? "requested_at" : "timeLabel"}
                         tickFormatter={(tick: string | number) => {
                           if (!tick) return '';
+                          if (timeRange !== 'history') return tick as string; 
+                          
                           const d = new Date(tick);
+                          // 優化：如果是 7 天或 30 天，顯示「日期」會比「幾點幾分」更有意義
+                          if (historyRange === '7d' || historyRange === '30d') {
+                            return `${d.getMonth() + 1}/${d.getDate()}`;
+                          }
                           return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
                         }}
                         tick={{ fontSize: 12, fill: '#6b7280' }}
                         axisLine={false}
                         tickLine={false}
+                        // 優化：當資料量太大時 (如 30 天)，避免標籤擠在一起
+                        minTickGap={20} 
                       />
 
-                      {/* Y軸：車輛數 */}
                       <YAxis
                         tick={{ fontSize: 12, fill: '#6b7280' }}
                         axisLine={false}
@@ -933,17 +1036,17 @@ export default function Maps() {
                         allowDecimals={false}
                       />
 
-                      {/* 游標移上去的浮動提示 */}
                       <Tooltip
-                        labelFormatter={(label) => new Date(label).toLocaleString()}
-                        formatter={(value) => [value, 'Available Bikes']}
+                        labelFormatter={(label) => timeRange === 'history' ? new Date(label).toLocaleString() : `Predicted Time: ${label}`}
+                        formatter={(value) => [value, timeRange === 'history' ? 'Available Bikes' : 'Predicted Bikes 🔮']}
                       />
 
                       <Area
                         type="monotone"
-                        dataKey="available_bikes"
-                        stroke="#a3c661"
+                        dataKey={timeRange === 'history' ? "available_bikes" : "bikes"}
+                        stroke={timeRange === 'history' ? "#a3c661" : "#8b5cf6"} 
                         strokeWidth={2}
+                        strokeDasharray={timeRange === 'history' ? "0" : "5 5"}
                         fillOpacity={1}
                         fill="url(#colorBikes)"
                       />
@@ -951,12 +1054,11 @@ export default function Maps() {
                   </ResponsiveContainer>
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-gray-400 text-sm">
-                    {detailLoading ? '載入歷史資料中...' : '暫無歷史資料'}
+                    {detailLoading ? '載入資料中...' : '暫無資料'}
                   </div>
                 )}
               </div>
-            </div>
-
+             </div>
           </div>
         </>
       )}
