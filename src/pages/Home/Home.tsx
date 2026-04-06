@@ -52,7 +52,7 @@ export default function Home() {
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link
               to="/register"
-              className="group relative inline-flex items-center gap-2 rounded-xl bg-orange-500 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-orange-500/30 transition-all duration-300 hover:bg-orange-600 hover:shadow-orange-500/50 hover:-translate-y-0.5 cursor-pointer"
+              className="group relative inline-flex items-center gap-2 rounded-xl bg-[#00A8E8] px-8 py-4 text-base font-semibold text-white shadow-xl shadow-[#00A8E8]/30 transition-all duration-300 hover:bg-[#007EA7] hover:shadow-[#007EA7]/50 hover:-translate-y-0.5 cursor-pointer"
             >
               Get Started Free
               <svg

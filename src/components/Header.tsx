@@ -32,8 +32,8 @@ export default function Header() {
     cn(
       'relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer',
       isActive(path)
-        ? 'text-violet-600 bg-violet-100'
-        : 'text-gray-700 hover:text-violet-600 hover:bg-violet-50'
+        ? 'text-[#00A8E8] bg-[#00A8E8]/10'
+        : 'text-gray-700 hover:text-[#00A8E8] hover:bg-[#00A8E8]/10'
     )
 
   return (
@@ -126,14 +126,14 @@ export default function Header() {
               <>
                 <Link
                   to="/login"
-                  className="relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer text-gray-700 hover:text-violet-600 hover:bg-violet-50"
+                  className="relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer text-gray-700 hover:text-[#00A8E8] hover:bg-[#00A8E8]/10"
                 >
                   Sign in
                 </Link>
                 <Link
                   to="/register"
                   className="ml-2 rounded-lg px-4 py-2 text-sm font-medium shadow-lg transition-all duration-200 hover:opacity-90 cursor-pointer"
-                  style={{ backgroundColor: '#4F46E5', color: '#ffffff' }}
+                  style={{ backgroundColor: '#003459', color: '#ffffff' }}
                 >
                   Get Started
                 </Link>

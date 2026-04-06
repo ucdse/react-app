@@ -4,59 +4,59 @@
 @layer base {
   :root {
     /* UCDSE Platform Design System - Glassmorphism Style */
-    /* Primary: #7C3AED (Purple) | Secondary: #A78BFA | CTA: #F97316 (Orange) */
-    --background: 270 100% 99%; /* #FAF5FF */
-    --foreground: 222 47% 11%; /* #1e293b - Slate 800 */
+    /* #FFFFFF | #00171F | #003459 | #007EA7 | #00A8E8 */
+    --background: 0 0% 100%; /* #FFFFFF */
+    --foreground: 196 100% 6%; /* #00171F */
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 196 100% 6%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 263 83% 58%; /* #7C3AED */
+    --popover-foreground: 196 100% 6%;
+    --primary: 197 100% 45%; /* #00A8E8 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 263 79% 76%; /* #A78BFA */
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%; /* Slate 500 */
-    --accent: 24 95% 53%; /* #F97316 - CTA Orange */
+    --secondary: 195 100% 33%; /* #007EA7 */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 197 40% 92%;
+    --muted-foreground: 205 100% 17%; /* #003459 */
+    --accent: 205 100% 17%; /* #003459 */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 263 30% 90%;
-    --input: 263 30% 90%;
-    --ring: 263 83% 58%;
+    --border: 197 50% 82%;
+    --input: 197 50% 82%;
+    --ring: 197 100% 45%;
     --radius: 0.75rem;
 
     /* Glassmorphism Variables */
-    --glass-bg: rgba(255, 255, 255, 0.8);
-    --glass-border: rgba(255, 255, 255, 0.3);
-    --glass-shadow: 0 8px 32px rgba(124, 58, 237, 0.1);
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(0, 168, 232, 0.2);
+    --glass-shadow: 0 8px 32px rgba(0, 168, 232, 0.12);
   }
 
   .dark {
-    --background: 263 50% 8%;
-    --foreground: 270 100% 98%;
-    --card: 263 50% 12%;
-    --card-foreground: 270 100% 98%;
-    --popover: 263 50% 12%;
-    --popover-foreground: 270 100% 98%;
-    --primary: 263 83% 65%;
-    --primary-foreground: 263 50% 8%;
-    --secondary: 263 60% 50%;
-    --secondary-foreground: 270 100% 98%;
-    --muted: 263 40% 20%;
-    --muted-foreground: 263 30% 65%;
-    --accent: 24 95% 53%;
-    --accent-foreground: 0 0% 100%;
+    --background: 196 100% 6%; /* #00171F */
+    --foreground: 0 0% 100%;
+    --card: 205 100% 17%; /* #003459 */
+    --card-foreground: 0 0% 100%;
+    --popover: 205 100% 17%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 197 100% 45%; /* #00A8E8 */
+    --primary-foreground: 196 100% 6%;
+    --secondary: 195 100% 33%; /* #007EA7 */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 205 60% 25%;
+    --muted-foreground: 197 60% 75%;
+    --accent: 197 100% 45%;
+    --accent-foreground: 196 100% 6%;
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 263 40% 25%;
-    --input: 263 40% 25%;
-    --ring: 263 83% 65%;
+    --border: 205 50% 28%;
+    --input: 205 50% 28%;
+    --ring: 197 100% 45%;
 
     /* Dark Mode Glassmorphism */
-    --glass-bg: rgba(30, 20, 50, 0.8);
-    --glass-border: rgba(167, 139, 250, 0.2);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --glass-bg: rgba(0, 23, 31, 0.85);
+    --glass-border: rgba(0, 168, 232, 0.25);
+    --glass-shadow: 0 8px 32px rgba(0, 168, 232, 0.15);
   }
 }
 
