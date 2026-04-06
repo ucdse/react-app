@@ -320,7 +320,7 @@ export default function Maps() {
         if (currentStatus.available_bikes === 0) {
           bgColorClass = 'bg-red-500' // 沒車 -> 紅色
         } else if (currentStatus.available_bikes <= 5) {
-          bgColorClass = 'bg-orange-500' // 即將沒車 (5台以下) -> 橘色
+          bgColorClass = 'bg-yellow-400' // 即將沒車 (5台以下) -> 黃色
         } else {
           bgColorClass = 'bg-[#a3c661]' // 5台以上 -> 綠色 (沿用你原本好看的主題綠)
         }
@@ -543,7 +543,7 @@ export default function Maps() {
       'WALKING',
       {
         strokeOpacity: 0,
-        icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1.0, scale: 3, strokeColor: '#7c3aed', strokeWeight: 5 }, offset: '0', repeat: '16px' }]
+        icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1.0, scale: 3, strokeColor: '#003459', strokeWeight: 5 }, offset: '0', repeat: '16px' }]
       }
     )
 
@@ -552,7 +552,7 @@ export default function Maps() {
       { lat: route_info.start_station.coords.lat, lng: route_info.start_station.coords.lon },
       { lat: route_info.end_station.coords.lat, lng: route_info.end_station.coords.lon },
       'BICYCLING',
-      { strokeColor: '#059669', strokeOpacity: 1.0, strokeWeight: 8 }
+      { strokeColor: '#00A8E8', strokeOpacity: 1.0, strokeWeight: 8 }
     )
 
     // 第三段：步行 (第二個車站 -> 終點)
@@ -562,7 +562,7 @@ export default function Maps() {
       'WALKING',
       {
         strokeOpacity: 0,
-        icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1.0, scale: 3, strokeColor: '#7c3aed', strokeWeight: 5 }, offset: '0', repeat: '16px' }]
+        icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1.0, scale: 3, strokeColor: '#003459', strokeWeight: 5 }, offset: '0', repeat: '16px' }]
       }
     )
 
@@ -579,7 +579,7 @@ export default function Maps() {
 
       if (isStation) {
         // 如果是旅程中的站點：顯示綠色大腳踏車 Icon (直接覆蓋在原站點上)
-        iconDiv.className = 'relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-emerald-500 text-white shadow-[0_0_15px_rgba(0,0,0,0.3)]'
+        iconDiv.className = 'relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-[#00A8E8] text-white shadow-[0_0_15px_rgba(0,0,0,0.3)]'
         iconDiv.innerHTML = `
           <svg viewBox="0 0 80 80" fill="currentColor" stroke="currentColor" stroke-width="2" class="h-6 w-6">
             <path d="M63,34a16,16,0,0,0-3.19.32L57,23.87V16h8a1,1,0,0,0,0-2H56a1,1,0,0,0-1,1v8H31V20h5a1,1,0,0,0,0-2H24a1,1,0,0,0,0,2h5v3.76L23.25,35.27A16,16,0,1,0,33,51h7a1,1,0,0,0,.85-.48l14.79-24,2.25,8.35A16,16,0,1,0,63,34ZM17,64a14,14,0,0,1,0-28,13.84,13.84,0,0,1,5.35,1.07L16.11,49.55A1,1,0,0,0,17,51H31A14,14,0,0,1,17,64Zm1.62-15,5.51-11A14,14,0,0,1,31,49Zm20.82,0H33A16,16,0,0,0,25,36.18L30.62,25H54.21ZM63,64a14,14,0,0,1-4.59-27.21L62,50.26A1,1,0,0,0,63,51a1.15,1.15,0,0,0,.26,0A1,1,0,0,0,64,49.74L60.34,36.26A13.71,13.71,0,0,1,63,36a14,14,0,0,1,0,28Z"/>
@@ -722,7 +722,7 @@ export default function Maps() {
           type="button"
           onClick={handleLocate}
           disabled={locationLoading}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-3 py-2 text-sm font-medium text-white shadow transition hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#00A8E8] px-3 py-2 text-sm font-medium text-white shadow transition hover:bg-[#007EA7] disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {locationLoading ? (
             <>
@@ -770,7 +770,7 @@ export default function Maps() {
               ref={startInputRef}
               type="text"
               placeholder="Start Point"
-              className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-600"
+              className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00A8E8]"
               onChange={(e) => {
                 if (!e.target.value) setStartPoint(null)
               }}
@@ -779,7 +779,7 @@ export default function Maps() {
               ref={endInputRef}
               type="text"
               placeholder="End Point"
-              className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-600"
+              className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00A8E8]"
               onChange={(e) => {
                 if (!e.target.value) setEndPoint(null)
               }}
@@ -788,7 +788,7 @@ export default function Maps() {
               type="button"
               onClick={handlePlanJourney}
               disabled={journeyLoading || !startPoint || !endPoint}
-              className="w-full inline-flex items-center justify-center rounded-xl bg-violet-600 px-3 py-2 text-sm font-medium text-white shadow transition hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full inline-flex items-center justify-center rounded-xl bg-[#00A8E8] px-3 py-2 text-sm font-medium text-white shadow transition hover:bg-[#007EA7] disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {journeyLoading ? 'Planning...' : 'Plan Journey'}
             </button>
@@ -886,7 +886,7 @@ export default function Maps() {
 
             {/* 歷史紀錄圖表區塊 */}
             <div className="overflow-hidden rounded-xl border border-gray-400">
-              <div className="flex items-center bg-[#9fbab8] text-white">
+              <div className="flex items-center bg-[#007EA7] text-white">
                 <button className="flex-1 py-1.5 text-center text-sm font-medium hover:bg-black/10 transition-colors">
                   Historic Average
                 </button>

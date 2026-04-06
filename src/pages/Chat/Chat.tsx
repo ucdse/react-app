@@ -392,7 +392,7 @@ export default function Chat() {
               type="button"
               onClick={handleStartNewChat}
               disabled={sending}
-              className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-violet-200/80 bg-white/80 px-3.5 py-2 text-sm font-medium text-violet-700 shadow-sm transition-all duration-200 hover:border-violet-300 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60 md:hidden"
+              className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-[#00A8E8]/30 bg-white/80 px-3.5 py-2 text-sm font-medium text-[#007EA7] shadow-sm transition-all duration-200 hover:border-[#00A8E8]/50 hover:bg-[#00A8E8]/10 disabled:cursor-not-allowed disabled:opacity-60 md:hidden"
             >
               <svg
                 className="h-4 w-4"
@@ -412,8 +412,8 @@ export default function Chat() {
         </div>
 
         <div className="flex-1 min-h-0 flex gap-4">
-          <aside className="hidden md:flex w-72 shrink-0 flex-col overflow-hidden rounded-[28px] border border-white/45 bg-white/70 p-4 shadow-[0_20px_60px_rgba(76,29,149,0.12)] backdrop-blur-xl">
-            <div className="rounded-2xl border border-white/50 bg-linear-to-br from-white/85 via-white/60 to-violet-50/80 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]">
+          <aside className="hidden md:flex w-72 shrink-0 flex-col overflow-hidden rounded-[28px] border border-white/45 bg-white/70 p-4 shadow-[0_20px_60px_rgba(0,52,89,0.12)] backdrop-blur-xl">
+            <div className="rounded-2xl border border-white/50 bg-linear-to-br from-white/85 via-white/60 to-[#00A8E8]/10 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg shadow-slate-900/15">
@@ -439,7 +439,7 @@ export default function Chat() {
                   </div>
                 </div>
 
-                <div className="rounded-full border border-violet-200/70 bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-violet-700 shadow-sm">
+                <div className="rounded-full border border-[#00A8E8]/30 bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-[#007EA7] shadow-sm">
                   {sessions.length}
                 </div>
               </div>
@@ -448,7 +448,7 @@ export default function Chat() {
                 type="button"
                 onClick={handleStartNewChat}
                 disabled={sending}
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-violet-200/80 bg-white/85 px-3 py-2.5 text-sm font-medium text-violet-700 shadow-sm transition-all duration-200 hover:border-violet-300 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[#00A8E8]/30 bg-white/85 px-3 py-2.5 text-sm font-medium text-[#007EA7] shadow-sm transition-all duration-200 hover:border-[#00A8E8]/50 hover:bg-[#00A8E8]/10 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <svg
                   className="h-4 w-4"
@@ -497,8 +497,8 @@ export default function Chat() {
                   ))}
                 </div>
               ) : sessions.length === 0 ? (
-                <div className="flex h-full min-h-48 flex-col items-center justify-center rounded-2xl border border-dashed border-violet-200/80 bg-white/55 px-5 text-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+                <div className="flex h-full min-h-48 flex-col items-center justify-center rounded-2xl border border-dashed border-[#00A8E8]/30 bg-white/55 px-5 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#00A8E8]/10 text-[#007EA7]">
                     <svg
                       className="h-5 w-5"
                       viewBox="0 0 24 24"
@@ -529,13 +529,13 @@ export default function Chat() {
                         onClick={() => handleSelectSession(session)}
                         className={`group relative w-full cursor-pointer overflow-hidden rounded-2xl border px-3.5 py-3 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
                           isActive
-                            ? 'border-violet-300/90 bg-linear-to-br from-white via-violet-50/95 to-indigo-50/80 text-slate-900 shadow-[0_16px_30px_rgba(99,102,241,0.14)] ring-1 ring-violet-200/80'
-                            : 'border-white/60 bg-white/78 text-foreground shadow-[0_8px_24px_rgba(15,23,42,0.06)] hover:-translate-y-0.5 hover:border-violet-200 hover:bg-white hover:shadow-[0_14px_28px_rgba(79,70,229,0.12)]'
+                            ? 'border-[#00A8E8]/40 bg-linear-to-br from-white via-[#00A8E8]/10 to-[#007EA7]/10 text-[#00171F] shadow-[0_16px_30px_rgba(0,168,232,0.14)] ring-1 ring-[#00A8E8]/30'
+                            : 'border-white/60 bg-white/78 text-foreground shadow-[0_8px_24px_rgba(15,23,42,0.06)] hover:-translate-y-0.5 hover:border-[#00A8E8]/30 hover:bg-white hover:shadow-[0_14px_28px_rgba(0,168,232,0.12)]'
                         }`}
                       >
                         {isActive && (
                           <div
-                            className="absolute top-0 right-0 h-24 w-24 translate-x-1/4 -translate-y-1/4 rounded-full bg-violet-300/35 blur-2xl"
+                            className="absolute top-0 right-0 h-24 w-24 translate-x-1/4 -translate-y-1/4 rounded-full bg-[#00A8E8]/20 blur-2xl"
                             aria-hidden
                           />
                         )}
@@ -543,8 +543,8 @@ export default function Chat() {
                         <div
                           className={`absolute inset-y-3 left-0 w-1 rounded-r-full transition-colors ${
                             isActive
-                              ? 'bg-violet-500'
-                              : 'bg-violet-200/0 group-hover:bg-violet-300/80'
+                              ? 'bg-[#00A8E8]'
+                              : 'bg-[#00A8E8]/0 group-hover:bg-[#00A8E8]/50'
                           }`}
                           aria-hidden
                         />
@@ -564,7 +564,7 @@ export default function Chat() {
                             >
                               <span
                                 className={`h-2 w-2 rounded-full ${
-                                  isActive ? 'bg-violet-500' : 'bg-violet-300'
+                                  isActive ? 'bg-[#00A8E8]' : 'bg-[#007EA7]/60'
                                 }`}
                               />
                               <span>{formatSessionTimestamp(session.created_at)}</span>
@@ -576,8 +576,8 @@ export default function Chat() {
                           <svg
                             className={`mt-0.5 h-4 w-4 shrink-0 transition-transform duration-200 ${
                               isActive
-                                ? 'translate-x-0 text-violet-600'
-                                : 'text-muted-foreground group-hover:translate-x-0.5 group-hover:text-violet-600'
+                                ? 'translate-x-0 text-[#00A8E8]'
+                                : 'text-muted-foreground group-hover:translate-x-0.5 group-hover:text-[#00A8E8]'
                             }`}
                             viewBox="0 0 24 24"
                             fill="none"
@@ -624,7 +624,7 @@ export default function Chat() {
                     <div
                       className={`max-w-[85%] rounded-2xl px-4 py-3 ${
                         isUserMessage
-                          ? 'rounded-br-md border border-violet-100/80 bg-white/92 text-foreground shadow-[0_8px_20px_rgba(15,23,42,0.05)]'
+                          ? 'rounded-br-md border border-[#00A8E8]/15 bg-white/92 text-foreground shadow-[0_8px_20px_rgba(15,23,42,0.05)]'
                           : 'rounded-bl-md border border-border bg-muted/80 text-foreground'
                       }`}
                     >
@@ -679,7 +679,7 @@ export default function Chat() {
                   type="submit"
                   disabled={sending || !input.trim()}
                   className="rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                  style={{ backgroundColor: '#4F46E5' }}
+                  style={{ backgroundColor: '#00A8E8' }}
                 >
                   Send
                 </button>
