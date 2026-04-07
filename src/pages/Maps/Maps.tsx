@@ -97,7 +97,7 @@ export default function Maps() {
       
       // 根據選擇的範圍過濾
       if (historyRange === '4h') return diffMs <= 4 * 60 * 60 * 1000;
-      return true; // 30d 就全給
+      return true;
     });
   }, [fullStationHistory, historyRange]);
 
