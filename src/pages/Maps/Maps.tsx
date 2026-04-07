@@ -372,7 +372,7 @@ export default function Maps() {
         if (currentStatus.available_bikes === 0) {
           bgColorClass = 'bg-red-500' // 沒車 -> 紅色
         } else if (currentStatus.available_bikes <= 5) {
-          bgColorClass = 'bg-orange-500' // 即將沒車 (5台以下) -> 橘色
+          bgColorClass = 'bg-yellow-400' // 即將沒車 (5台以下) -> 黃色
         } else {
           bgColorClass = 'bg-[#a3c661]' // 5台以上 -> 綠色 (沿用你原本好看的主題綠)
         }
@@ -602,7 +602,7 @@ export default function Maps() {
       'WALKING',
       {
         strokeOpacity: 0,
-        icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1.0, scale: 3, strokeColor: '#7c3aed', strokeWeight: 5 }, offset: '0', repeat: '16px' }]
+        icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1.0, scale: 3, strokeColor: '#003459', strokeWeight: 5 }, offset: '0', repeat: '16px' }]
       }
     )
 
@@ -611,7 +611,7 @@ export default function Maps() {
       { lat: route_info.start_station.coords.lat, lng: route_info.start_station.coords.lon },
       { lat: route_info.end_station.coords.lat, lng: route_info.end_station.coords.lon },
       'BICYCLING',
-      { strokeColor: '#059669', strokeOpacity: 1.0, strokeWeight: 8 }
+      { strokeColor: '#00A8E8', strokeOpacity: 1.0, strokeWeight: 8 }
     )
 
     // 第三段：步行 (第二個車站 -> 終點)
@@ -621,7 +621,7 @@ export default function Maps() {
       'WALKING',
       {
         strokeOpacity: 0,
-        icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1.0, scale: 3, strokeColor: '#7c3aed', strokeWeight: 5 }, offset: '0', repeat: '16px' }]
+        icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1.0, scale: 3, strokeColor: '#003459', strokeWeight: 5 }, offset: '0', repeat: '16px' }]
       }
     )
 
@@ -638,7 +638,7 @@ export default function Maps() {
 
       if (isStation) {
         // 如果是旅程中的站點：顯示綠色大腳踏車 Icon (直接覆蓋在原站點上)
-        iconDiv.className = 'relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-emerald-500 text-white shadow-[0_0_15px_rgba(0,0,0,0.3)]'
+        iconDiv.className = 'relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-[#00A8E8] text-white shadow-[0_0_15px_rgba(0,0,0,0.3)]'
         iconDiv.innerHTML = `
           <svg viewBox="0 0 80 80" fill="currentColor" stroke="currentColor" stroke-width="2" class="h-6 w-6">
             <path d="M63,34a16,16,0,0,0-3.19.32L57,23.87V16h8a1,1,0,0,0,0-2H56a1,1,0,0,0-1,1v8H31V20h5a1,1,0,0,0,0-2H24a1,1,0,0,0,0,2h5v3.76L23.25,35.27A16,16,0,1,0,33,51h7a1,1,0,0,0,.85-.48l14.79-24,2.25,8.35A16,16,0,1,0,63,34ZM17,64a14,14,0,0,1,0-28,13.84,13.84,0,0,1,5.35,1.07L16.11,49.55A1,1,0,0,0,17,51H31A14,14,0,0,1,17,64Zm1.62-15,5.51-11A14,14,0,0,1,31,49Zm20.82,0H33A16,16,0,0,0,25,36.18L30.62,25H54.21ZM63,64a14,14,0,0,1-4.59-27.21L62,50.26A1,1,0,0,0,63,51a1.15,1.15,0,0,0,.26,0A1,1,0,0,0,64,49.74L60.34,36.26A13.71,13.71,0,0,1,63,36a14,14,0,0,1,0,28Z"/>
@@ -781,7 +781,7 @@ export default function Maps() {
           type="button"
           onClick={handleLocate}
           disabled={locationLoading}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-3 py-2 text-sm font-medium text-white shadow transition hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#00A8E8] px-3 py-2 text-sm font-medium text-white shadow transition hover:bg-[#007EA7] disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {locationLoading ? (
             <>
@@ -829,7 +829,7 @@ export default function Maps() {
               ref={startInputRef}
               type="text"
               placeholder="Start Point"
-              className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-600"
+              className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00A8E8]"
               onChange={(e) => {
                 if (!e.target.value) setStartPoint(null)
               }}
@@ -838,7 +838,7 @@ export default function Maps() {
               ref={endInputRef}
               type="text"
               placeholder="End Point"
-              className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-600"
+              className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00A8E8]"
               onChange={(e) => {
                 if (!e.target.value) setEndPoint(null)
               }}
@@ -847,7 +847,7 @@ export default function Maps() {
               type="button"
               onClick={handlePlanJourney}
               disabled={journeyLoading || !startPoint || !endPoint}
-              className="w-full inline-flex items-center justify-center rounded-xl bg-violet-600 px-3 py-2 text-sm font-medium text-white shadow transition hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full inline-flex items-center justify-center rounded-xl bg-[#00A8E8] px-3 py-2 text-sm font-medium text-white shadow transition hover:bg-[#007EA7] disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {journeyLoading ? 'Planning...' : 'Plan Journey'}
             </button>
@@ -947,15 +947,15 @@ export default function Maps() {
             <div className="overflow-hidden rounded-xl border border-gray-400">
               
               {/* === 頂部切換區 === */}
-              <div className="flex flex-col bg-[#9fbab8] text-white">
+              <div className="flex flex-col bg-[#007EA7] text-white"> {/* 👈 更新為主題藍 */}
                 {/* 第一排：歷史 vs 預測 */}
                 <div className="flex border-b border-white/20">
                   {/* 左側：歷史紀錄分頁 */}
                   <button 
                     className={`flex-1 py-1.5 text-center text-sm transition-colors ${
                       timeRange === 'history' 
-                        ? 'bg-white text-gray-800 font-bold' // 啟用時：白底深灰字
-                        : 'text-white hover:bg-black/10'     // 未啟用時：透明底白字
+                        ? 'bg-white text-gray-800 font-bold' 
+                        : 'text-white hover:bg-black/10'     
                     }`}
                     onClick={() => setTimeRange('history')}
                   >
@@ -966,8 +966,8 @@ export default function Maps() {
                   <div 
                     className={`flex-1 relative flex items-center transition-colors ${
                       timeRange !== 'history' 
-                        ? 'bg-white text-[#8b5cf6] font-bold' // 啟用時：白底紫字，強調預測感
-                        : 'text-white hover:bg-black/10'      // 未啟用時：透明底白字
+                        ? 'bg-white text-[#8b5cf6] font-bold' // 預測維持紫色，保持未來感
+                        : 'text-white hover:bg-black/10'      
                     }`}
                   >
                     <select 
@@ -975,11 +975,9 @@ export default function Maps() {
                       onChange={(e) => setTimeRange(e.target.value as 'future_4h' | 'future_24h')}
                       className="w-full h-full py-1.5 px-3 text-center text-sm bg-transparent appearance-none cursor-pointer focus:outline-none"
                     >
-                      {/* 當在歷史模式時，才顯示這個佔位符，並隱藏不給選 */}
                       {timeRange === 'history' && (
                         <option value="placeholder" disabled hidden>Prediction Model 🔮</option>
                       )}
-                      {/* 真實的預測選項 */}
                       <option value="future_4h" className="text-gray-700 font-normal">Future 4 Hours 🔮</option>
                       <option value="future_24h" className="text-gray-700 font-normal">Future 24 Hours 🔮</option>
                     </select>
@@ -995,7 +993,9 @@ export default function Maps() {
                         key={range}
                         onClick={() => setHistoryRange(range)}
                         className={`flex-1 py-1.5 transition-colors border-r border-white/10 last:border-r-0 ${
-                          historyRange === range ? 'bg-white text-[#9fbab8] font-bold shadow-inner' : 'hover:bg-white/10 text-white/80'
+                          historyRange === range 
+                            ? 'bg-white text-[#007EA7] font-bold shadow-inner' // 👈 啟用按鈕的文字更新為主題藍
+                            : 'hover:bg-white/10 text-white/80'
                         }`}
                       >
                         {range.toUpperCase()}
@@ -1009,21 +1009,20 @@ export default function Maps() {
               <div className="h-56 w-full bg-white p-2">
                 {chartLoading ? (
                   <div className="flex h-full w-full items-center justify-center text-gray-400 text-sm">
-                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent mr-2" />
+                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[#007EA7] border-t-transparent mr-2" />
                     AI 模型預測中...
                   </div>
                 ) : (timeRange === 'history' ? filteredHistory : predictionData).length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
-                      // 👈 這裡改成吃 filteredHistory
                       data={timeRange === 'history' ? filteredHistory : predictionData}
                       margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
                     >
-                      {/* ... 中間的 defs, CartesianGrid, YAxis, Tooltip, Area 都跟你上一版完全一樣 ... */}
                       <defs>
                         <linearGradient id="colorBikes" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={timeRange === 'history' ? "#a3c661" : "#8b5cf6"} stopOpacity={0.8} />
-                          <stop offset="95%" stopColor={timeRange === 'history' ? "#a3c661" : "#8b5cf6"} stopOpacity={0} />
+                          {/* 👈 歷史圖表的漸層色更新為主題藍 */}
+                          <stop offset="5%" stopColor={timeRange === 'history' ? "#007EA7" : "#8b5cf6"} stopOpacity={0.8} />
+                          <stop offset="95%" stopColor={timeRange === 'history' ? "#007EA7" : "#8b5cf6"} stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
@@ -1035,7 +1034,6 @@ export default function Maps() {
                           if (timeRange !== 'history') return tick as string; 
                           
                           const d = new Date(tick);
-                          // 優化：如果是 7 天或 30 天，顯示「日期」會比「幾點幾分」更有意義
                           if (historyRange === '7d' || historyRange === '30d') {
                             return `${d.getMonth() + 1}/${d.getDate()}`;
                           }
@@ -1044,7 +1042,6 @@ export default function Maps() {
                         tick={{ fontSize: 12, fill: '#6b7280' }}
                         axisLine={false}
                         tickLine={false}
-                        // 優化：當資料量太大時 (如 30 天)，避免標籤擠在一起
                         minTickGap={20} 
                       />
 
@@ -1063,7 +1060,7 @@ export default function Maps() {
                       <Area
                         type="monotone"
                         dataKey={timeRange === 'history' ? "available_bikes" : "bikes"}
-                        stroke={timeRange === 'history' ? "#a3c661" : "#8b5cf6"} 
+                        stroke={timeRange === 'history' ? "#007EA7" : "#8b5cf6"}  // 👈 歷史圖表的線條更新為主題藍
                         strokeWidth={2}
                         strokeDasharray={timeRange === 'history' ? "0" : "5 5"}
                         fillOpacity={1}
@@ -1077,7 +1074,7 @@ export default function Maps() {
                   </div>
                 )}
               </div>
-             </div>
+            </div>
           </div>
         </>
       )}

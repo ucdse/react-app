@@ -193,7 +193,7 @@ export default function Profile() {
                 <button className="flex-1 rounded-lg border border-border bg-transparent py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted cursor-pointer">
                   Edit Profile
                 </button>
-                <button className="flex-1 rounded-lg py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:opacity-90 cursor-pointer" style={{ backgroundColor: '#7C3AED', boxShadow: '0 10px 15px -3px rgba(124, 58, 237, 0.25)' }}>
+                <button className="flex-1 rounded-lg py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:opacity-90 cursor-pointer" style={{ backgroundColor: '#00A8E8', boxShadow: '0 10px 15px -3px rgba(0, 168, 232, 0.25)' }}>
                   Settings
                 </button>
               </div>

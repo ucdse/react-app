@@ -143,7 +143,7 @@ export default function Login() {
               type="submit"
               disabled={loading}
               className="btn-glow relative w-full rounded-lg py-3 text-sm font-semibold shadow-lg transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              style={{ backgroundColor: '#4F46E5', color: '#ffffff' }}
+              style={{ backgroundColor: '#00A8E8', color: '#ffffff' }}
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
