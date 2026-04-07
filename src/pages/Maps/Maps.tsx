@@ -966,7 +966,7 @@ export default function Maps() {
                   <div 
                     className={`flex-1 relative flex items-center transition-colors ${
                       timeRange !== 'history' 
-                        ? 'bg-white text-[#8b5cf6] font-bold' // 預測維持紫色，保持未來感
+                        ? 'bg-white text-[#007EA7] font-bold' // 預測維持紫色，保持未來感
                         : 'text-white hover:bg-black/10'      
                     }`}
                   >
@@ -1010,7 +1010,7 @@ export default function Maps() {
                 {chartLoading ? (
                   <div className="flex h-full w-full items-center justify-center text-gray-400 text-sm">
                     <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[#007EA7] border-t-transparent mr-2" />
-                    AI 模型預測中...
+                    Loading AI Prediction...
                   </div>
                 ) : (timeRange === 'history' ? filteredHistory : predictionData).length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
@@ -1021,8 +1021,8 @@ export default function Maps() {
                       <defs>
                         <linearGradient id="colorBikes" x1="0" y1="0" x2="0" y2="1">
                           {/* 👈 歷史圖表的漸層色更新為主題藍 */}
-                          <stop offset="5%" stopColor={timeRange === 'history' ? "#007EA7" : "#8b5cf6"} stopOpacity={0.8} />
-                          <stop offset="95%" stopColor={timeRange === 'history' ? "#007EA7" : "#8b5cf6"} stopOpacity={0} />
+                          <stop offset="5%" stopColor="#007EA7" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#007EA7" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
@@ -1060,7 +1060,7 @@ export default function Maps() {
                       <Area
                         type="monotone"
                         dataKey={timeRange === 'history' ? "available_bikes" : "bikes"}
-                        stroke={timeRange === 'history' ? "#007EA7" : "#8b5cf6"}  // 👈 歷史圖表的線條更新為主題藍
+                        stroke="#007EA7" 
                         strokeWidth={2}
                         strokeDasharray={timeRange === 'history' ? "0" : "5 5"}
                         fillOpacity={1}
@@ -1070,7 +1070,7 @@ export default function Maps() {
                   </ResponsiveContainer>
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-gray-400 text-sm">
-                    {detailLoading ? '載入資料中...' : '暫無資料'}
+                    {detailLoading ? 'Loading data...' : 'No data available'}
                   </div>
                 )}
               </div>
