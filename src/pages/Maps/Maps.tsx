@@ -77,7 +77,7 @@ export default function Maps() {
 
   // 1. 儲存 API 回傳的「所有」歷史資料 (30天)
   const [fullStationHistory, setFullStationHistory] = useState<StationAvailabilityVO[]>([])
-  const [historyRange, setHistoryRange] = useState<'4h' | '1d' | '7d' | '30d'>('4h')
+  const [historyRange, setHistoryRange] = useState<'4h' | '1d'>('4h')
 
   const [timeRange, setTimeRange] = useState<'history' | 'future_4h' | 'future_24h'>('history')
   const [predictionData, setPredictionData] = useState<ChartData[]>([])
@@ -97,8 +97,6 @@ export default function Maps() {
       
       // 根據選擇的範圍過濾
       if (historyRange === '4h') return diffMs <= 4 * 60 * 60 * 1000;
-      if (historyRange === '1d') return diffMs <= 24 * 60 * 60 * 1000;
-      if (historyRange === '7d') return diffMs <= 7 * 24 * 60 * 60 * 1000;
       return true; // 30d 就全給
     });
   }, [fullStationHistory, historyRange]);
@@ -988,7 +986,7 @@ export default function Maps() {
                 {/* 第二排：歷史範圍切換 (只有在選擇 History 時出現) */}
                 {timeRange === 'history' && (
                   <div className="flex text-xs bg-black/10">
-                    {(['4h', '1d', '7d', '30d'] as const).map((range) => (
+                    {(['4h', '1d'] as const).map((range) => (
                       <button
                         key={range}
                         onClick={() => setHistoryRange(range)}
@@ -1034,9 +1032,7 @@ export default function Maps() {
                           if (timeRange !== 'history') return tick as string; 
                           
                           const d = new Date(tick);
-                          if (historyRange === '7d' || historyRange === '30d') {
-                            return `${d.getMonth() + 1}/${d.getDate()}`;
-                          }
+                          
                           return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
                         }}
                         tick={{ fontSize: 12, fill: '#6b7280' }}
