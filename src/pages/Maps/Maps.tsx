@@ -30,7 +30,7 @@ const formatUpdateTime = (val: string | number) => {
   // 如果解析出來真的是無效時間，就顯示 --
   if (isNaN(dateObj.getTime())) return '--'
 
-  return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  return dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 }
 
 declare global {
@@ -42,13 +42,13 @@ declare global {
 function formatLocationError(code: number): string {
   switch (code) {
     case 1:
-      return '定位被拒绝，请在浏览器中允许位置权限'
+      return 'Location access denied. Please enable it in your browser settings.'
     case 2:
-      return '无法获取位置信息'
+      return 'Unable to get location information.'
     case 3:
-      return '定位超时，请重试'
+      return 'Location timed out. Please try again.'
     default:
-      return '定位失败，请重试'
+      return 'Location failed. Please try again.'
   }
 }
 
@@ -141,7 +141,7 @@ export default function Maps() {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
   const keyError =
     !apiKey || typeof apiKey !== 'string' || !apiKey.startsWith('AIza')
-      ? '请设置有效的 VITE_GOOGLE_MAPS_API_KEY（.env）'
+      ? 'Please set a valid VITE_GOOGLE_MAPS_API_KEY in .env'
       : null
   const error = keyError ?? loadError
 
@@ -164,7 +164,7 @@ export default function Maps() {
     const script = document.createElement('script')
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=${GOOGLE_MAPS_CALLBACK}&libraries=maps,marker,places,routes&language=en&v=beta`
     script.async = true
-    script.onerror = () => setLoadError('Google Maps 脚本加载失败')
+    script.onerror = () => setLoadError('Google Maps script failed to load')
     document.head.appendChild(script)
 
     return () => {
@@ -195,7 +195,7 @@ export default function Maps() {
         }
       })
       .catch((err) => {
-        if (!cancelled) setStationsError(err instanceof Error ? err.message : '获取站点失败')
+        if (!cancelled) setStationsError(err instanceof Error ? err.message : 'Failed to load stations')
       })
       .finally(() => {
         if (!cancelled) setStationsLoading(false)
@@ -345,7 +345,7 @@ export default function Maps() {
     if (userPosition) {
       const userMarker = document.createElement('gmp-advanced-marker')
       userMarker.setAttribute('position', center)
-      userMarker.setAttribute('title', '我的位置')
+      userMarker.setAttribute('title', 'My Location')
       gmpMap.appendChild(userMarker)
     }
 
@@ -670,7 +670,7 @@ export default function Maps() {
 
   const handleLocate = () => {
     if (!navigator.geolocation) {
-      setLocationError('当前浏览器不支持定位')
+      setLocationError('Your browser does not support geolocation')
       return
     }
     setLocationError(null)
@@ -764,13 +764,13 @@ export default function Maps() {
         <div className="flex items-center gap-2 mb-3">
           <span className="text-sm font-semibold text-foreground">Maps</span>
           {stationsLoading && (
-            <span className="text-xs text-muted-foreground">加载站点中…</span>
+            <span className="text-xs text-muted-foreground">Loading stations...</span>
           )}
           {!stationsLoading && stationsError && (
             <span className="text-xs text-amber-600">{stationsError}</span>
           )}
           {!stationsLoading && !stationsError && (
-            <span className="text-xs text-muted-foreground">共 {stations.length} 个站点</span>
+            <span className="text-xs text-muted-foreground">{stations.length} stations</span>
           )}
         </div>
 
@@ -784,7 +784,7 @@ export default function Maps() {
           {locationLoading ? (
             <>
               <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              定位中…
+              Locating...
             </>
           ) : (
             <>
@@ -800,7 +800,7 @@ export default function Maps() {
                 <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-              定位到我的位置
+              Locate me
             </>
           )}
         </button>
@@ -1049,7 +1049,7 @@ export default function Maps() {
                       />
 
                       <Tooltip
-                        labelFormatter={(label) => timeRange === 'history' ? new Date(label).toLocaleString() : `Predicted Time: ${label}`}
+                        labelFormatter={(label) => timeRange === 'history' ? new Date(label).toLocaleString('en-US') : `Predicted Time: ${label}`}
                         formatter={(value) => [value, timeRange === 'history' ? 'Available Bikes' : 'Predicted Bikes 🔮']}
                       />
 

@@ -307,7 +307,7 @@ export default function Weather() {
       .catch((err) => {
         if (cancelled) return
         console.error('Weather API Error:', err)
-        setError(err instanceof Error ? err.message : '获取天气数据失败')
+        setError(err instanceof Error ? err.message : 'Failed to load weather data')
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -325,7 +325,7 @@ export default function Weather() {
         <div className="rounded-xl p-3 mb-4 flex items-center justify-center border border-gray-200/60 min-h-[72px]">
           <div className="flex items-center gap-2 text-gray-400">
             <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-500" />
-            <span className="text-sm">加载天气中</span>
+            <span className="text-sm">Loading weather</span>
           </div>
         </div>
         <div>
