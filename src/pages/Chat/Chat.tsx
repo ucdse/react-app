@@ -58,7 +58,7 @@ function isAbortLikeError(error: unknown): boolean {
 function formatSessionTimestamp(createdAt: string): string {
   const date = new Date(createdAt)
   if (Number.isNaN(date.getTime())) return 'Unknown time'
-  return date.toLocaleString([], {
+  return date.toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
@@ -257,7 +257,7 @@ export default function Chat() {
       if (!isMountedRef.current || requestId !== historyRequestIdRef.current) return
       pendingScrollToBottomRef.current = false
       const message =
-        error instanceof Error ? error.message : '加载会话消息失败，请稍后重试'
+        error instanceof Error ? error.message : 'Failed to load session messages. Please try again later.'
       toast.error(message)
     } finally {
       if (isMountedRef.current && requestId === historyRequestIdRef.current) {
@@ -354,7 +354,7 @@ export default function Chat() {
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantId
-                ? { ...m, content: `[请求失败] ${err.message}` }
+                ? { ...m, content: `[Request failed] ${err.message}` }
                 : m
             )
           )
@@ -431,10 +431,10 @@ export default function Chat() {
                   </div>
                   <div className="min-w-0">
                     <h2 className="text-sm font-semibold tracking-tight text-foreground">
-                      历史会话
+                      History
                     </h2>
                     <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                      选择一个上下文，继续之前的对话。
+                      Select a context to continue your previous conversation.
                     </p>
                   </div>
                 </div>
@@ -472,7 +472,7 @@ export default function Chat() {
               </p>
               {activeSessionId && (
                 <p className="text-[11px] text-muted-foreground">
-                  已选 1 项
+                  1 item selected
                 </p>
               )}
             </div>
@@ -512,10 +512,10 @@ export default function Chat() {
                     </svg>
                   </div>
                   <p className="mt-4 text-sm font-medium text-foreground">
-                    暂无历史会话
+                    No conversation history
                   </p>
                   <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    发起第一条消息后，这里会显示可继续的对话记录。
+                    Start your first message and your conversation history will appear here.
                   </p>
                 </div>
               ) : (
@@ -552,7 +552,7 @@ export default function Chat() {
                         <div className="flex items-start gap-3 pl-2">
                           <div className="min-w-0 flex-1">
                             <div className="line-clamp-2 text-sm font-semibold leading-5">
-                              {session.title || '未命名会话'}
+                              {session.title || 'Untitled session'}
                             </div>
 
                             <div
@@ -569,7 +569,7 @@ export default function Chat() {
                               />
                               <span>{formatSessionTimestamp(session.created_at)}</span>
                               <span aria-hidden>•</span>
-                              <span>{isActive ? '当前对话' : '点击继续'}</span>
+                              <span>{isActive ? 'Current' : 'Click to continue'}</span>
                             </div>
                           </div>
 
@@ -607,7 +607,7 @@ export default function Chat() {
               className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4"
             >
               {loadingHistory && (
-                <p className="text-xs text-muted-foreground">正在加载会话消息...</p>
+                <p className="text-xs text-muted-foreground">Loading session messages...</p>
               )}
               {messages.map((msg) => {
                 const isUserMessage = msg.role === 'user'
