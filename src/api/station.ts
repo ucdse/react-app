@@ -1,7 +1,7 @@
 import request from './request'
 import { STATION_ENDPOINTS } from './endpoints'
 
-/** 站点信息（与后端 station_to_dict 一致） */
+/** Station info (consistent with backend station_to_dict) */
 export interface StationVO {
   number: number
   contract_name: string
@@ -15,7 +15,7 @@ export interface StationVO {
 }
 
 /**
- * 获取所有站点列表（无需鉴权）。
+ * Get all station list (no auth required).
  */
 export const getStationsAPI = async (): Promise<StationVO[]> => {
   const res = await request.get<StationVO[]>(STATION_ENDPOINTS.list)
@@ -41,27 +41,27 @@ export interface StationAvailabilityVO {
  */
 export const getStationAvailabilityAPI = async (number: number): Promise<StationAvailabilityVO[]> => {
   try {
-  // 發送請求
+  // Send request
     const res = await request.get<unknown>(`/api/stations/${number}/availability`);
     
     let actualData: unknown = res;
 
-    // 1. 剝除第一層：Axios 的 response.data wrapper (如果有的話)
+    // 1. Peel first layer: Axios response.data wrapper (if exists)
     if (actualData !== null && typeof actualData === 'object' && 'data' in actualData) {
       actualData = (actualData as Record<string, unknown>).data;
     }
 
-    // 2. 剝除第二層：後端可能自己包裝的 { data: [...] } (確保它不是陣列才去剝)
+    // 2. Peel second layer: Backend may wrap { data: [...] } (only peel if it's not array)
     if (actualData !== null && typeof actualData === 'object' && !Array.isArray(actualData) && 'data' in actualData) {
       actualData = (actualData as Record<string, unknown>).data;
     }
 
-    // 3. 確保型別安全並轉回我們要的格式
+    // 3. Ensure type safety and convert back to our format
     const finalData = actualData as StationAvailabilityVO | StationAvailabilityVO[];
 
     if (!finalData) return [];
 
-    // 4. 統一包裝成「陣列」回傳
+    // 4. Uniformly wrap as "array" and return
     return Array.isArray(finalData) ? finalData : [finalData];
 
   } catch (error) {
@@ -75,20 +75,20 @@ export const getStationsStatusAPI = async (): Promise<StationAvailabilityVO[]> =
   try {
     const res = await request.get<unknown>('/api/stations/status')
     
-    // 加上 : unknown 讓 TypeScript 知道我們要手動剝除外層
+    // Add : unknown to let TypeScript know we manually peel outer layers
     let actualData: unknown = res;
 
-    // 1. 剝除第一層：Axios 的 response.data wrapper (如果有的話)
+    // 1. Peel first layer: Axios response.data wrapper (if exists)
     if (actualData !== null && typeof actualData === 'object' && 'data' in actualData) {
       actualData = (actualData as Record<string, unknown>).data;
     }
 
-    // 2. 剝除第二層：Flask 後端的 { code: 0, data: [...] } wrapper
+    // 2. Peel second layer: Flask backend { code: 0, data: [...] } wrapper
     if (actualData !== null && typeof actualData === 'object' && !Array.isArray(actualData) && 'data' in actualData) {
       actualData = (actualData as Record<string, unknown>).data;
     }
 
-    // 3. 確保最後拿到的是陣列
+    // 3. Ensure final result is array
     return Array.isArray(actualData) ? actualData : [];
   } catch (error) {
     console.error('Failed to fetch all stations status:', error);
@@ -97,23 +97,23 @@ export const getStationsStatusAPI = async (): Promise<StationAvailabilityVO[]> =
 }
 
 
-/** 預測資料（與後端回傳的 JSON 結構一致） */
+/** Prediction data (consistent with JSON structure returned by backend) */
 export interface PredictionResponseVO {
   forecast_time: string;
   predicted_available_bikes: number;
 }
 
-/** 轉換後給 Recharts 圖表使用的統一格式 */
+/** Unified format for Recharts chart usage after transformation */
 export interface ChartData {
-  timeLabel: string;     // X 軸顯示的時間，例如 "20:00"
-  bikes: number;         // Y 軸的單車數量
-  isPrediction: boolean; // 標記是否為預測數據 (用來改變圖表樣式)
+  timeLabel: string;     // Time displayed on X axis, e.g., "20:00"
+  bikes: number;         // Bike count on Y axis
+  isPrediction: boolean; // Mark whether it's prediction data (used to change chart style)
 }
 
 /**
- * 獲取站點未來的單車預測數量
- * @param number 站點 ID
- * @param hours 想要截取的未來小時數 (例如 4 或 24)
+ * Get future bike prediction count for station
+ * @param number Station ID
+ * @param hours Number of future hours to slice (e.g., 4 or 24)
  */
 export const getStationPredictionAPI = async (number: number, hours: number): Promise<ChartData[]> => {
   try {
@@ -121,12 +121,12 @@ export const getStationPredictionAPI = async (number: number, hours: number): Pr
     
     let actualData: unknown = res;
 
-    // 1. 剝除第一層：Axios 的 response.data wrapper (如果有的話)
+    // 1. Peel first layer: Axios response.data wrapper (if exists)
     if (actualData !== null && typeof actualData === 'object' && 'data' in actualData) {
       actualData = (actualData as Record<string, unknown>).data;
     }
 
-    // 2. 剝除第二層：Flask 後端的 { code: 0, data: [...] } wrapper
+    // 2. Peel second layer: Flask backend { code: 0, data: [...] } wrapper
     if (actualData !== null && typeof actualData === 'object' && !Array.isArray(actualData) && 'data' in actualData) {
       actualData = (actualData as Record<string, unknown>).data;
     }
@@ -135,10 +135,10 @@ export const getStationPredictionAPI = async (number: number, hours: number): Pr
 
     if (!Array.isArray(finalData)) return [];
 
-    // 3. 根據使用者選擇的時間，截取對應的小時數
+    // 3. Slice corresponding hours based on user selection
     const slicedData = finalData.slice(0, hours);
 
-    // 4. 轉換成 Recharts 圖表需要的格式
+    // 4. Transform to format needed by Recharts chart
     return slicedData.map(item => {
       const date = new Date(item.forecast_time);
       const hoursStr = date.getHours().toString().padStart(2, '0');
@@ -147,7 +147,7 @@ export const getStationPredictionAPI = async (number: number, hours: number): Pr
       return {
         timeLabel: `${hoursStr}:${minutesStr}`,
         bikes: item.predicted_available_bikes,
-        isPrediction: true // 加上預測標籤
+        isPrediction: true // Add prediction label
       };
     });
 

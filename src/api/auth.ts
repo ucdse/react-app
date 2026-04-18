@@ -2,13 +2,13 @@ import { USER_ENDPOINTS } from './endpoints'
 import request from './request'
 import type { UserProfileVO } from './user'
 
-/** 用户登录请求参数 */
+/** User login request parameters */
 export interface UserLoginDTO {
   identifier: string
   password: string
 }
 
-/** 用户登录响应数据 */
+/** User login response data */
 export interface UserLoginVO {
   access_token: string
   refresh_token: string
@@ -17,11 +17,11 @@ export interface UserLoginVO {
 }
 
 /**
- * 注册返回结构与用户资料一致，使用类型别名复用定义。
+ * Registration returns structure consistent with user profile, using type alias to reuse definition.
  */
 export type UserRegisterVO = UserProfileVO
 
-/** 用户注册请求参数 */
+/** User registration request parameters */
 export interface UserRegisterDTO {
   username: string
   email: string
@@ -33,8 +33,8 @@ const normalizeIdentifier = (identifier: string): string => identifier.trim()
 const normalizeEmail = (email: string): string => email.trim().toLowerCase()
 
 /**
- * 用户登录。
- * 入参中 `identifier` 支持用户名或邮箱，发送前会自动 trim。
+ * User login.
+ * The `identifier` parameter supports username or email, will be auto-trimmed before sending.
  */
 export const userLoginAPI = async (data: UserLoginDTO): Promise<UserLoginVO> => {
   const res = await request.post<UserLoginVO>(USER_ENDPOINTS.login, {
@@ -45,9 +45,9 @@ export const userLoginAPI = async (data: UserLoginDTO): Promise<UserLoginVO> => 
 }
 
 /**
- * 用户注册。
- * 入参中的用户名与邮箱会标准化，避免同值不同格式导致的后端校验歧义。
- * 注册成功后账户未激活，需调用激活接口完成邮箱验证。
+ * User registration.
+ * Username and email in parameters will be normalized to avoid backend validation ambiguity from same value in different formats.
+ * After successful registration, account is inactive, need to call activation API to complete email verification.
  */
 export const userRegisterAPI = async (data: UserRegisterDTO): Promise<UserRegisterVO> => {
   const res = await request.post<UserRegisterVO>(USER_ENDPOINTS.register, {
@@ -59,8 +59,8 @@ export const userRegisterAPI = async (data: UserRegisterDTO): Promise<UserRegist
 }
 
 /**
- * 请求发送验证码到指定邮箱或用户名对应的邮箱。
- * 未激活用户每分钟最多请求一次。
+ * Request verification code to be sent to specified email or email corresponding to username.
+ * Inactive users can request at most once per minute.
  */
 export const sendVerificationCodeAPI = async (identifier: string): Promise<void> => {
   await request.post(USER_ENDPOINTS.sendVerificationCode, {
@@ -69,8 +69,8 @@ export const sendVerificationCodeAPI = async (identifier: string): Promise<void>
 }
 
 /**
- * 使用邮箱或用户名 + 6 位验证码激活账户。
- * 激活成功后即可登录。
+ * Activate account using email or username + 6-digit verification code.
+ * After successful activation, can login immediately.
  */
 export const activateAccountAPI = async (
   identifier: string,
@@ -84,8 +84,8 @@ export const activateAccountAPI = async (
 }
 
 /**
- * 通过邮件中的激活链接 Token 激活账户（路径 /activate/:token 对应）。
- * 激活成功后即可登录。
+ * Activate account via activation link Token in email (corresponds to path /activate/:token).
+ * After successful activation, can login immediately.
  */
 export const activateByTokenAPI = async (token: string): Promise<UserRegisterVO> => {
   const res = await request.post<UserRegisterVO>(USER_ENDPOINTS.activateByToken, {

@@ -32,7 +32,7 @@ function createWelcomeMessage(): Message {
   }
 }
 
-/** 解析流式响应：后端每块为 {"content": "xxx"}，结尾可能为 [DONE] */
+/** Parse streaming response: each chunk from backend is {"content": "xxx"}, may end with [DONE] */
 function parseStreamChunk(raw: string): string {
   const s = raw.trim()
   if (s === '[DONE]') return ''
@@ -196,7 +196,7 @@ export default function Chat() {
         setActiveSessionId(findSessionIdByChatId(list ?? [], activeChatId))
       }
     } catch (error) {
-      // 已有全局错误提示，这里只做静默处理
+      // Global error toast already exists, just handle silently here
       console.error(error)
     } finally {
       if (isMountedRef.current && !silent) {

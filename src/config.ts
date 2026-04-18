@@ -1,5 +1,5 @@
 /**
- * 后端 API 配置：请求统一走前端同源的 /api，由开发代理或生产反向代理转发到后端。
- * 开发环境见 vite.config.ts 的 server.proxy；生产环境需在 Nginx 等配置 /api -> 后端地址。
+ * Backend API configuration: requests uniformly go through frontend same-origin /api, forwarded to backend by dev proxy or production reverse proxy.
+ * For dev environment see vite.config.ts server.proxy; for production configure /api -> backend address in Nginx etc.
  */
 export const API_BASE_URL = ''

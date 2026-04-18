@@ -1,7 +1,7 @@
 import { axiosWithAuth } from './client'
 import { USER_ENDPOINTS } from './endpoints'
 
-/** 用户信息 / 个人资料（与后端 serialize_user 一致） */
+/** User info / Profile (consistent with backend serialize_user) */
 export interface UserProfileVO {
   id: number
   username: string
@@ -12,8 +12,8 @@ export interface UserProfileVO {
 }
 
 /**
- * 获取当前用户信息（需鉴权）。
- * 若 401/403，client 会尝试刷新 token，失败后跳转登录页。
+ * Get current user info (requires auth).
+ * If 401/403, client will try to refresh token, redirect to login page on failure.
  */
 export const getMeAPI = async (): Promise<UserProfileVO> => {
   const res = await axiosWithAuth.get<UserProfileVO>(USER_ENDPOINTS.me)
@@ -21,7 +21,7 @@ export const getMeAPI = async (): Promise<UserProfileVO> => {
 }
 
 /**
- * 用户登出（需鉴权，携带当前 access_token 通知服务端注销会话）。
+ * User logout (requires auth, carries current access_token to notify server to terminate session).
  */
 export const userLogoutAPI = async (): Promise<void> => {
   await axiosWithAuth.post<void>(USER_ENDPOINTS.logout)

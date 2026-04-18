@@ -14,7 +14,7 @@ export default function Header() {
       await userLogoutAPI()
       logoutByServerSucceeded = true
     } catch {
-      // 网络错误或 token 已过期时仍清除本地并跳转
+      // When network error or token expired, still clear local and redirect
     } finally {
       clearAuthTokens()
       if (logoutByServerSucceeded) {

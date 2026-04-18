@@ -5,57 +5,57 @@ update readme
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## 本地部署步骤
+## Local Deployment Steps
 
-### 环境要求
+### Environment Requirements
 
-- **Node.js**：建议 18.x 或更高版本（可用 `node -v` 检查）
-- **npm** 或 **pnpm** / **yarn**（随 Node 安装的 npm 即可）
+- **Node.js**: Recommended 18.x or higher (check with `node -v`)
+- **npm** or **pnpm** / **yarn** (npm comes with Node installation)
 
-### 1. 克隆并进入项目目录
+### 1. Clone and Enter Project Directory
 
 ```bash
-git clone <仓库地址>
+git clone <repository-url>
 cd react-app
 ```
 
-若已在项目根目录，可跳过此步。
+Skip this step if you are already in the project root directory.
 
-### 2. 复制环境变量配置
+### 2. Copy Environment Configuration
 
 ```bash
 cp .env.example .env
 ```
 
-然后按需编辑 `.env` 填入本地配置（如 API 密钥等）。
+Then edit `.env` as needed to fill in local configuration (such as API keys).
 
-### 3. 安装依赖
+### 3. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 4. 启动开发环境
+### 4. Start Development Environment
 
 ```bash
 npm run dev
 ```
 
-启动后终端会显示本地访问地址（如 `http://localhost:5173`），在浏览器中打开即可。`--host` 已配置，同一局域网内可用本机 IP 访问。
+After starting, the terminal will display the local access address (e.g., `http://localhost:5173`), open it in your browser. `--host` is configured, so you can access via your machine's IP within the same local network.
 
-### 5. 构建与预览（可选）
+### 5. Build and Preview (Optional)
 
-- **构建生产版本**：
+- **Build production version**:
   ```bash
   npm run build
   ```
-  产物在 `dist/` 目录。
+  Output is in the `dist/` directory.
 
-- **本地预览构建结果**：
+- **Preview build locally**:
   ```bash
   npm run preview
   ```
-  用于在本地验证打包后的应用。
+  Used to verify the packaged application locally.
 
 Currently, two official plugins are available:
 

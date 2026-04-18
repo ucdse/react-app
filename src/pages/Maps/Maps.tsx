@@ -6,8 +6,8 @@ import { planJourneyAPI, type JourneyPlanResponse } from '@/api/journey'
 import Weather from '@/components/Weather'
 
 
-// ========== Google Maps API 相关常量 ==========
-/** 全局回调名，供 Google Maps 脚本加载完成后调用 */
+// ========== Google Maps API Related Constants ==========
+/** Global callback name for Google Maps script to call after loading */
 const GOOGLE_MAPS_CALLBACK = '__googleMapsCallback'
 const DEFAULT_CENTER = '40.12150192260742,-100.45039367675781'
 const DEFAULT_ZOOM = 4
@@ -16,18 +16,18 @@ const DEMO_MAP_ID = 'DEMO_MAP_ID'
 const MARKER_BASE_Z_INDEX = 1
 const MARKER_ACTIVE_Z_INDEX = 10_000
 
-// 安全格式化更新時間的 Helper
+// Helper to safely format update time
 const formatUpdateTime = (val: string | number) => {
   if (!val) return '--'
 
   const num = Number(val)
-  // 解決 Safari 瀏覽器看不懂 SQL 格式 "YYYY-MM-DD HH:mm:ss" 的問題，把空白換成標準的 "T"
+  // Fix Safari browser not understanding SQL format "YYYY-MM-DD HH:mm:ss", replace space with standard "T"
   const safeString = typeof val === 'string' ? val.replace(' ', 'T') : val
 
-  // 如果是純數字(或數字字串)就用 num，否則就用 safeString 去給 Date 解析
+  // If pure number (or numeric string) use num, otherwise use safeString for Date parsing
   const dateObj = !isNaN(num) ? new Date(num) : new Date(safeString)
 
-  // 如果解析出來真的是無效時間，就顯示 --
+  // If parsed time is invalid, show --
   if (isNaN(dateObj.getTime())) return '--'
 
   return dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
@@ -73,9 +73,9 @@ export default function Maps() {
 
   const [detailLoading, setDetailLoading] = useState(false)
 
-  // ========== 預測圖表相關 State ==========
+  // ========== Prediction Chart Related State ==========
 
-  // 1. 儲存 API 回傳的「所有」歷史資料 (30天)
+  // 1. Store "all" historical data returned by API (30 days)
   const [fullStationHistory, setFullStationHistory] = useState<StationAvailabilityVO[]>([])
   const [historyRange, setHistoryRange] = useState<'4h' | '1d'>('4h')
 
@@ -83,25 +83,25 @@ export default function Maps() {
   const [predictionData, setPredictionData] = useState<ChartData[]>([])
   const [chartLoading, setChartLoading] = useState(false)
 
-  // 2. 使用 useMemo 動態過濾資料 (這樣切換按鈕時，不用重新發 API)
+  // 2. Use useMemo to dynamically filter data (no need to re-call API when switching buttons)
   const filteredHistory = useMemo(() => {
     if (fullStationHistory.length === 0) return [];
 
     const now = Date.now();
     return fullStationHistory.filter(item => {
-      // 解析時間 (相容數字或字串格式)
+      // Parse time (compatible with numeric or string format)
       const num = Number(item.last_update);
       const itemTime = !isNaN(num) ? num : new Date(String(item.last_update).replace(' ', 'T')).getTime();
       
       const diffMs = now - itemTime;
       
-      // 根據選擇的範圍過濾
+      // Filter based on selected range
       if (historyRange === '4h') return diffMs <= 4 * 60 * 60 * 1000;
       return true;
     });
   }, [fullStationHistory, historyRange]);
 
-  // 當選擇「未來預測」時，呼叫後端 API
+  // When selecting "Future Prediction", call backend API
   useEffect(() => {
     if (!selectedStation || timeRange === 'history') return
     
@@ -180,13 +180,13 @@ export default function Maps() {
       setStationsError(null)
     })
     
-    // 同時發出兩個 API 請求
+    // Send two API requests simultaneously
     Promise.all([getStationsAPI(), getStationsStatusAPI()])
       .then(([stationsData, statusData]) => {
         if (!cancelled) {
           setStations(stationsData)
           
-          // 將 status 陣列轉換成 Object 字典：{ 站點編號: 狀態資料 }
+          // Convert status array to Object dictionary: { station_number: status_data }
           const statusMap: Record<number, StationAvailabilityVO> = {}
           statusData.forEach(st => {
             statusMap[st.number] = st
@@ -206,7 +206,7 @@ export default function Maps() {
     }
   }, [])
 
-  /** 进入页面时自动定位到用户所在位置 */
+  /** Automatically locate to user's position when entering page */
   useEffect(() => {
     if (!navigator.geolocation) return
     queueMicrotask(() => {
@@ -230,12 +230,12 @@ export default function Maps() {
   }, [])
 
   /**
-   * 【地图渲染】在 Google Maps SDK 加载完成且容器存在时，创建并挂载地图
-   * 渲染流程：
-   * 1. 使用 Google 提供的 Web Component：document.createElement('gmp-map')，由 SDK 注册的 <gmp-map> 会内部调用 Maps JavaScript API 渲染地图瓦片
-   * 2. 设置 center、zoom、map-id 等属性，决定地图中心与缩放级别
-   * 3. 创建 gmp-advanced-marker 标记（用户位置 + 站点），append 到 gmp-map 上
-   * 4. 将 gmpMap 挂载到 ref 对应的 div（mapContainerRef），地图即显示在页面上
+   * [Map Rendering] Create and mount map when Google Maps SDK loaded and container exists
+   * Rendering flow:
+   * 1. Use Google's Web Component: document.createElement('gmp-map'), the <gmp-map> registered by SDK internally calls Maps JavaScript API to render map tiles
+   * 2. Set center, zoom, map-id and other properties to determine map center and zoom level
+   * 3. Create gmp-advanced-marker markers (user position + stations), append to gmp-map
+   * 4. Mount gmpMap to div corresponding to ref (mapContainerRef), map displays on page
    */
   useEffect(() => {
     if (!scriptLoaded || !mapContainerRef.current) return
@@ -320,7 +320,7 @@ export default function Maps() {
       activeMarker = marker
     }
 
-    /** 延迟隐藏，允许鼠标从圆点移动到悬浮框而不闪烁 */
+    /** Delayed hide, allows mouse to move from dot to tooltip without flickering */
     const hideTooltip = (marker: HTMLElement, tooltip: HTMLDivElement) => {
       clearHideTimeout()
       hideTimeoutId = setTimeout(() => {
@@ -332,7 +332,7 @@ export default function Maps() {
       }, 150)
     }
 
-    /** 立即隐藏（点击切换 / 点击地图空白处） */
+    /** Hide immediately (click toggle / click map blank area) */
     const hideTooltipNow = (marker: HTMLElement, tooltip: HTMLDivElement) => {
       clearHideTimeout()
       tooltip.classList.add('hidden')
@@ -341,7 +341,7 @@ export default function Maps() {
       if (activeMarker === marker) activeMarker = null
     }
 
-    /* 用户位置标记：<gmp-advanced-marker> 同样由 Google Maps SDK 提供，用于在地图上显示点位 */
+    /* User location marker: <gmp-advanced-marker> also provided by Google Maps SDK, used to display points on map */
     if (userPosition) {
       const userMarker = document.createElement('gmp-advanced-marker')
       userMarker.setAttribute('position', center)
@@ -349,7 +349,7 @@ export default function Maps() {
       gmpMap.appendChild(userMarker)
     }
 
-    /* 站点标记：每个站点一个 gmp-advanced-marker，带自定义内容（图标 + 悬浮信息） */
+    /* Station markers: one gmp-advanced-marker per station, with custom content (icon + tooltip) */
     stations.forEach((s) => {
       const marker = document.createElement('gmp-advanced-marker')
       marker.setAttribute('position', `${s.latitude},${s.longitude}`)
@@ -365,14 +365,14 @@ export default function Maps() {
 
       const currentStatus = stationsStatus[s.number]
 
-      let bgColorClass = 'bg-gray-400' // 預設顏色：灰
+      let bgColorClass = 'bg-gray-400' // Default color: gray
       if (currentStatus) {
         if (currentStatus.available_bikes === 0) {
-          bgColorClass = 'bg-red-500' // 沒車 -> 紅色
+          bgColorClass = 'bg-red-500' // No bikes -> Red
         } else if (currentStatus.available_bikes <= 5) {
-          bgColorClass = 'bg-yellow-400' // 即將沒車 (5台以下) -> 黃色
+          bgColorClass = 'bg-yellow-400' // Running low (less than 5) -> Yellow
         } else {
-          bgColorClass = 'bg-[#a3c661]' // 5台以上 -> 綠色 (沿用你原本好看的主題綠)
+          bgColorClass = 'bg-[#a3c661]' // More than 5 -> Green (using the nice theme green)
         }
       }
 
