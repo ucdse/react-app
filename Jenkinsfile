@@ -61,13 +61,13 @@ spec:
     }
 
     stages {
-        stage('1. 拉取代码') {
+        stage('1. Checkout Code') {
             steps {
                 checkout scm
             }
         }
 
-        stage('2. TypeScript 和 ESLint 检查') {
+        stage('2. TypeScript and ESLint Check') {
             steps {
                 container('node') {
                     sh '''
@@ -81,7 +81,7 @@ spec:
             }
         }
 
-        stage('3. 构建并推送 Docker 镜像') {
+        stage('3. Build and Push Docker Image') {
             when {
                 not { changeRequest() }
             }
@@ -103,8 +103,8 @@ spec:
                         sh '''
                         echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
                         DOCKER_BUILDKIT=1 docker build --secret id=env,src="${ENV_FILE}" -t ${FULL_IMAGE} .
-                        # main 分支始终需要部署，故强制推送镜像；
-                        # 其他分支由 PUSH_IMAGE 参数控制是否推送。
+                        # main branch always needs deployment, so force push image;
+                        # other branches controlled by PUSH_IMAGE parameter.
                         if [ "${PUSH_IMAGE}" = "true" ] || [ "${BRANCH_NAME}" = "main" ]; then
                           docker push ${FULL_IMAGE}
                         fi
@@ -115,7 +115,7 @@ spec:
             }
         }
 
-        stage('4. 部署到 EC2') {
+        stage('4. Deploy to EC2') {
             when {
                 allOf {
                     branch 'main'
@@ -138,11 +138,11 @@ spec:
                           apk add --no-cache openssh-client bash
                         fi
 
-                        # 在 EC2 上创建 .env 所在目录（若不存在）
+                        # Create .env directory on EC2 (if not exists)
                         ENV_DIR=$(dirname "${CONTAINER_ENV_FILE}")
                         ssh -i "${SSH_KEY}" -o StrictHostKeyChecking=no "${SSH_USER}@${SERVER_HOST}" "mkdir -p ${ENV_DIR}"
 
-                        # 将 Jenkins 中的 .env credential 上传到 EC2 指定路径
+                        # Upload .env credential from Jenkins to EC2 specified path
                         scp -i "${SSH_KEY}" -o StrictHostKeyChecking=no "${ENV_FILE}" "${SSH_USER}@${SERVER_HOST}:${CONTAINER_ENV_FILE}"
 
                         PASS_B64=$(printf '%s' "${DOCKER_PASS}" | base64)

@@ -1,9 +1,9 @@
 /**
- * API 层统一出口：
- * - axios 客户端（request / axiosWithAuth）
- * - token 工具
- * - 业务 API（auth / user 模块）
- * - 通用响应类型
+ * API layer unified export:
+ * - axios client (request / axiosWithAuth)
+ * - token utilities
+ * - business API (auth / user modules)
+ * - common response types
  */
 export { default as request } from './request'
 export { axiosWithAuth } from './client'

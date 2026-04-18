@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getWeatherAPI } from '@/api/weather'
 
-// 天气数据类型定义
+// Weather data type definition
 interface WeatherData {
   current: {
     temperature: number
@@ -88,7 +88,7 @@ function createFallbackWeatherData(): WeatherData {
   }
 }
 
-// 天气图标组件
+// Weather icon component
 function WeatherIcon({ type }: { type: 'sunny' | 'cloudy' | 'rainy' }) {
   if (type === 'sunny') {
     return (
@@ -140,12 +140,12 @@ function WeatherIcon({ type }: { type: 'sunny' | 'cloudy' | 'rainy' }) {
   )
 }
 
-/** 开尔文转摄氏度 */
+/** Kelvin to Celsius conversion */
 function kelvinToCelsius(kelvin: number): number {
   return kelvin - 273.15
 }
 
-/** 若为开尔文（典型范围约 200–320）则转为摄氏度，否则按原值（视为已是摄氏度） */
+/** If Kelvin (typical range ~200-320) convert to Celsius, otherwise keep original value (assumed to be Celsius) */
 function toCelsius(value: number): number {
   if (value > 150) {
     return kelvinToCelsius(value)
@@ -153,10 +153,10 @@ function toCelsius(value: number): number {
   return value
 }
 
-// 根据天气代码或描述转换为图标类型
+// Convert weather code or description to icon type
 function getWeatherIcon(weatherCode: number | string | undefined, description?: string): 'sunny' | 'cloudy' | 'rainy' {
   if (typeof weatherCode === 'number') {
-    // 根据天气代码判断（常见天气API代码）
+    // Determine based on weather code (common weather API codes)
     if (weatherCode >= 200 && weatherCode < 600) return 'rainy'
     if (weatherCode >= 800 && weatherCode < 900) {
       if (weatherCode === 800) return 'sunny'
@@ -172,20 +172,20 @@ function getWeatherIcon(weatherCode: number | string | undefined, description?: 
   return 'cloudy'
 }
 
-// 格式化时间为 HH:mm
+// Format time as HH:mm
 function formatTime(timeString: string | number | Date | undefined): string {
   if (!timeString) return '00:00'
   try {
     let date: Date
     if (typeof timeString === 'number') {
-      // Unix时间戳（秒或毫秒）
+      // Unix timestamp (seconds or milliseconds)
       date = timeString > 1e10 ? new Date(timeString) : new Date(timeString * 1000)
     } else if (typeof timeString === 'string') {
-      // ISO字符串或HH:mm格式
+      // ISO string or HH:mm format
       if (timeString.includes('T') || timeString.includes(' ')) {
         date = new Date(timeString)
       } else if (timeString.match(/^\d{2}:\d{2}$/)) {
-        // 已经是HH:mm格式
+        // Already in HH:mm format
         return timeString
       } else {
         date = new Date(timeString)
@@ -204,17 +204,17 @@ function formatTime(timeString: string | number | Date | undefined): string {
   }
 }
 
-// 处理天气数据的通用函数，根据实际API返回格式调整
+// Generic function to process weather data, adjust based on actual API response format
 function processWeatherData(data: unknown): WeatherData {
   const fallback = createFallbackWeatherData()
   if (!isObject(data)) {
     return fallback
   }
 
-  // 尝试多种常见的数据格式
+  // Try multiple common data formats
   const dataObj = data
 
-  // 格式1: { current: { temp: 12, ... }, hourly: [...] }
+  // Format 1: { current: { temp: 12, ... }, hourly: [...] }
   const current = asObject(dataObj.current)
   if (current) {
     const tempRaw = pickNumber(current.temp, current.temperature, current.temp_c) ?? 12
@@ -222,7 +222,7 @@ function processWeatherData(data: unknown): WeatherData {
 
     const { code: weatherCode, description } = extractWeatherMeta(current)
 
-    // 处理小时预报
+    // Process hourly forecast
     let forecast: WeatherData['forecast'] = []
     if (Array.isArray(dataObj.hourly)) {
       forecast = dataObj.hourly
@@ -273,7 +273,7 @@ function processWeatherData(data: unknown): WeatherData {
     }
   }
 
-  // 如果格式不匹配，返回默认数据
+  // If format doesn't match, return default data
   return fallback
 }
 
@@ -282,7 +282,7 @@ export default function Weather() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // 组件加载就去拉取数据，因为不再依赖地理定位
+  // Fetch data when component loads since we no longer depend on geolocation
   const displayWeatherData = weatherData || createFallbackWeatherData()
 
   useEffect(() => {
@@ -292,7 +292,7 @@ export default function Weather() {
         if (cancelled) return null
         setLoading(true)
         setError(null)
-        // 无需参数
+        // No parameters needed
         return getWeatherAPI()
       })
       .then((data) => {
@@ -300,7 +300,7 @@ export default function Weather() {
 
         console.log('Weather API Response:', data)
 
-        // 使用通用处理逻辑，后端已处理好格式
+        // Use generic processing logic, backend has already handled the format
         const processedData = processWeatherData(data)
         setWeatherData(processedData)
       })
@@ -318,7 +318,7 @@ export default function Weather() {
     }
   }, [])
 
-  // 加载中：不显示任何数字，只显示加载样式
+  // Loading: don't show any numbers, only show loading style
   if (loading || !weatherData) {
     return (
       <div>
@@ -349,7 +349,7 @@ export default function Weather() {
       {error && (
         <div className="text-center text-red-500 text-xs mb-2">{error}</div>
       )}
-      {/* 当前天气部分 */}
+      {/* Current weather section */}
       <div className="bg-white/60 rounded-xl p-3 mb-4 flex items-center justify-between border border-gray-200/60">
         <div className="text-4xl font-bold text-black leading-none">{displayWeatherData.current.temperature}°C</div>
         <div className="text-black">
@@ -357,7 +357,7 @@ export default function Weather() {
         </div>
       </div>
 
-      {/* 小时预报部分 */}
+      {/* Hourly forecast section */}
       <div>
         <div className="text-xs text-gray-500 mb-3 font-normal">Forecast</div>
         <div className="flex gap-1.5 justify-between">

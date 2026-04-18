@@ -21,8 +21,8 @@ export default defineConfig([
     },
     rules: {
       'react-refresh/only-export-components': [
-        'warn', // 建议改为 warn，避免卡死 CI 构建
-        { allowConstantExport: true }, // 👈 关键：允许导出常量
+        'warn', // Recommend changing to warn to avoid blocking CI builds
+        { allowConstantExport: true }, // 👈 Key: allow exporting constants
       ],
     },
   },

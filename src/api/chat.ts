@@ -119,7 +119,7 @@ function openStream(
 }
 
 /**
- * 调用 /api/chat/stream 流式接口，携带 JWT（与 axios 一致：先 resolve 再发，401 时刷新并重试一次），通过 onMessage 逐块回调内容。
+ * Call /api/chat/stream streaming endpoint, carry JWT (same as axios: resolve first then send, refresh and retry once on 401), callback content block by block via onMessage.
  */
 export async function chatStreamAPI(options: ChatStreamOptions): Promise<void> {
   const { signal } = options

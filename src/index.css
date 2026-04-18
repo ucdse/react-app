@@ -65,7 +65,7 @@
     border-color: hsl(var(--border));
   }
   html {
-    /* 始终为滚动条预留空间，避免有/无滚动条时 Header 位置在页面间偏移 */
+    /* Always reserve space for scrollbar to avoid Header position shifting between pages with/without scrollbar */
     scrollbar-gutter: stable;
   }
   body {
