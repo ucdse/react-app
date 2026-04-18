@@ -40,7 +40,7 @@ export default function Header() {
     <header className="fixed top-4 left-4 right-4 z-50 flex justify-center">
       <nav className="mx-auto flex items-center bg-white/90 backdrop-blur-sm shadow-lg rounded-full px-4 py-3 w-max max-w-full sm:px-6 md:px-8 md:max-w-6xl lg:min-w-4xl lg:max-w-480 xl:min-w-6xl xl:max-w-720">
         <div className="flex items-center justify-between w-full">
-          {/* 左侧：Logo + News + Maps */}
+          {/* Left: Logo + News + Maps */}
           <div className="flex items-center gap-4">
             <Link
               to="/"
@@ -89,7 +89,7 @@ export default function Header() {
             </div>
           </div>
 
-          {/* 右侧：Sign in / Get started 或 Profile / Log out */}
+          {/* Right: Sign in / Get started or Profile / Log out */}
           <div className="flex items-center gap-2">
             {isLoggedIn ? (
               <>

@@ -156,7 +156,7 @@ function toCelsius(value: number): number {
 // Convert weather code or description to icon type
 function getWeatherIcon(weatherCode: number | string | undefined, description?: string): 'sunny' | 'cloudy' | 'rainy' {
   if (typeof weatherCode === 'number') {
-    // 根据天气代码判断（常见天气API代码）
+    // Determine based on weather code (common weather API codes)
     if (weatherCode >= 200 && weatherCode < 600) return 'rainy'
     if (weatherCode >= 800 && weatherCode < 900) {
       if (weatherCode === 800) return 'sunny'
@@ -178,14 +178,14 @@ function formatTime(timeString: string | number | Date | undefined): string {
   try {
     let date: Date
     if (typeof timeString === 'number') {
-      // Unix时间戳（秒或毫秒）
+      // Unix timestamp (seconds or milliseconds)
       date = timeString > 1e10 ? new Date(timeString) : new Date(timeString * 1000)
     } else if (typeof timeString === 'string') {
-      // ISO字符串或HH:mm格式
+      // ISO string or HH:mm format
       if (timeString.includes('T') || timeString.includes(' ')) {
         date = new Date(timeString)
       } else if (timeString.match(/^\d{2}:\d{2}$/)) {
-        // 已经是HH:mm格式
+        // Already in HH:mm format
         return timeString
       } else {
         date = new Date(timeString)
@@ -211,10 +211,10 @@ function processWeatherData(data: unknown): WeatherData {
     return fallback
   }
 
-  // 尝试多种常见的数据格式
+  // Try multiple common data formats
   const dataObj = data
 
-  // 格式1: { current: { temp: 12, ... }, hourly: [...] }
+  // Format 1: { current: { temp: 12, ... }, hourly: [...] }
   const current = asObject(dataObj.current)
   if (current) {
     const tempRaw = pickNumber(current.temp, current.temperature, current.temp_c) ?? 12
@@ -222,7 +222,7 @@ function processWeatherData(data: unknown): WeatherData {
 
     const { code: weatherCode, description } = extractWeatherMeta(current)
 
-    // 处理小时预报
+    // Process hourly forecast
     let forecast: WeatherData['forecast'] = []
     if (Array.isArray(dataObj.hourly)) {
       forecast = dataObj.hourly
@@ -273,7 +273,7 @@ function processWeatherData(data: unknown): WeatherData {
     }
   }
 
-  // 如果格式不匹配，返回默认数据
+  // If format doesn't match, return default data
   return fallback
 }
 
@@ -292,7 +292,7 @@ export default function Weather() {
         if (cancelled) return null
         setLoading(true)
         setError(null)
-        // 无需参数
+        // No parameters needed
         return getWeatherAPI()
       })
       .then((data) => {
@@ -300,7 +300,7 @@ export default function Weather() {
 
         console.log('Weather API Response:', data)
 
-        // 使用通用处理逻辑，后端已处理好格式
+        // Use generic processing logic, backend has already handled the format
         const processedData = processWeatherData(data)
         setWeatherData(processedData)
       })

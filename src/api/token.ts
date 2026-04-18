@@ -60,7 +60,7 @@ export const setAuthTokens = (
   }
 }
 
-/** Clear tokens from both sessionStorage and localStorage to avoid残留 */
+/** Clear tokens from both sessionStorage and localStorage to avoid residue */
 export const clearAuthTokens = (): void => {
   if (typeof window === 'undefined') return
   for (const storage of [window.sessionStorage, window.localStorage]) {

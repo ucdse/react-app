@@ -146,10 +146,10 @@ export default function Maps() {
   const error = keyError ?? loadError
 
   /**
-   * 【调用 Google Maps API】加载 Google Maps JavaScript SDK
-   * - 通过动态插入 <script> 标签请求：https://maps.googleapis.com/maps/api/js
-   * - 使用 key、callback、libraries=maps,marker、v=beta 等参数
-   * - 加载成功后执行全局 callback，将 scriptLoaded 置为 true，从而触发地图渲染
+   * [Call Google Maps API] Load Google Maps JavaScript SDK
+   * - Request via dynamic <script> tag insertion: https://maps.googleapis.com/maps/api/js
+   * - Use key, callback, libraries=maps,marker, v=beta and other parameters
+   * - After successful loading, execute global callback, set scriptLoaded to true, triggering map render
    */
   useEffect(() => {
     if (keyError) return
@@ -280,7 +280,7 @@ export default function Maps() {
       : DEFAULT_CENTER
     const zoom = userPosition ? USER_ZOOM : DEFAULT_ZOOM
 
-    /* 创建地图根节点：<gmp-map> 由 Google Maps JS SDK 注册，挂载后由 SDK 负责请求并渲染地图底图 */
+    /* Create map root node: <gmp-map> registered by Google Maps JS SDK, mounted and rendered by SDK */
     const gmpMap = document.createElement('gmp-map')
     gmpMap.setAttribute('center', center)
     gmpMap.setAttribute('zoom', String(zoom))
@@ -445,7 +445,7 @@ export default function Maps() {
         setPredictionData([])
         setChartLoading(false)
 
-        setSelectedStation(s) // 更新選中的站點
+        setSelectedStation(s) // Update selected station
       })
       marker.addEventListener('gmp-click', () => {
         toggleStationInfo()
@@ -471,10 +471,10 @@ export default function Maps() {
       }
     })
 
-    /* 将地图根节点挂载到 DOM：此处触发 <gmp-map> 的渲染，地图底图由 Google Maps API 绘制 */
+    /* Mount map root node to DOM: triggers <gmp-map> rendering here, base map drawn by Google Maps API */
     container.appendChild(gmpMap)
 
-    /** 精简 Google 默认控件：通过 SDK 暴露的 innerMap.setOptions 只保留缩放，关掉其余 */
+    /** Streamline Google default controls: via SDK exposed innerMap.setOptions keep only zoom, disable others */
     const mapEl = gmpMap as HTMLElement & {
       innerMap?: {
         setOptions: (opts: {
@@ -507,13 +507,13 @@ export default function Maps() {
   }, [scriptLoaded, userPosition, stations, stationsStatus])
 
 
-  // 在點擊站點時，跟 Flask 後端要「完整的」車位資料與歷史紀錄
+  // When clicking station, fetch "complete" parking data and history from Flask backend
   useEffect(() => {
     if (!selectedStation) return
     let cancelled = false
     setDetailLoading(true)
 
-    // 這裡我們不傳 range 參數，直接拿全部
+    // Here we don't pass range parameter, directly get all
     getStationAvailabilityAPI(selectedStation.number)
       .then((data) => {
         if (!cancelled) {
@@ -522,13 +522,13 @@ export default function Maps() {
             return !isNaN(num) ? num : new Date(String(val).replace(' ', 'T')).getTime()
           }
 
-          // 1. 將資料依照時間戳由舊到新排序
+          // 1. Sort data by timestamp from oldest to newest
           const sortedData = [...data].sort((a, b) => parseTime(a.last_update) - parseTime(b.last_update))
 
-          // 2. 把排序好的「完整資料」存進新的 State
+          // 2. Store sorted "complete data" into new State
           setFullStationHistory(sortedData)
 
-          // 3. 陣列的最後一筆就是最新資料
+          // 3. The last entry in the array is the newest data
           if (sortedData.length > 0) {
             setStationDetail(sortedData[sortedData.length - 1])
           } else {
@@ -549,17 +549,17 @@ export default function Maps() {
   }, [selectedStation])
 
 
-  // 监听 journeyResult 改变，绘制路线
+  // Listen for journeyResult changes, draw route
   useEffect(() => {
     if (!scriptLoaded || !mapContainerRef.current) return
     const mapEl = mapContainerRef.current.querySelector('gmp-map') as HTMLElement & { innerMap?: google.maps.Map }
     if (!mapEl || !mapEl.innerMap || typeof google === 'undefined') return
 
-    // 每次绘制前，清除旧的路线
+    // Clear old routes before each draw
     directionsRenderersRef.current.forEach(renderer => renderer.setMap(null))
     directionsRenderersRef.current = []
 
-    // 清除自定义路线 markers
+    // Clear custom route markers
     journeyMarkersRef.current.forEach(marker => marker.remove())
     journeyMarkersRef.current = []
 
@@ -593,7 +593,7 @@ export default function Maps() {
       )
     }
 
-    // 第一段：步行 (起點 -> 第一個車站)
+    // First leg: Walking (start -> first station)
     drawRoute(
       { lat: search_context.start_resolved.lat, lng: search_context.start_resolved.lon },
       { lat: route_info.start_station.coords.lat, lng: route_info.start_station.coords.lon },
@@ -604,7 +604,7 @@ export default function Maps() {
       }
     )
 
-    // 第二段：騎車 (第一個車站 -> 第二個車站)
+    // Second leg: Biking (first station -> second station)
     drawRoute(
       { lat: route_info.start_station.coords.lat, lng: route_info.start_station.coords.lon },
       { lat: route_info.end_station.coords.lat, lng: route_info.end_station.coords.lon },
@@ -612,7 +612,7 @@ export default function Maps() {
       { strokeColor: '#00A8E8', strokeOpacity: 1.0, strokeWeight: 8 }
     )
 
-    // 第三段：步行 (第二個車站 -> 終點)
+    // Third leg: Walking (second station -> end)
     drawRoute(
       { lat: route_info.end_station.coords.lat, lng: route_info.end_station.coords.lon },
       { lat: search_context.end_resolved.lat, lng: search_context.end_resolved.lon },
@@ -623,19 +623,19 @@ export default function Maps() {
       }
     )
 
-    // 绘制自定义的 4 个关键点 Markers
+    // Draw 4 custom key point markers
     const createMarker = (position: google.maps.LatLngLiteral, title: string, isStation: boolean) => {
       const marker = document.createElement('gmp-advanced-marker')
       marker.setAttribute('position', `${position.lat},${position.lng}`)
       marker.setAttribute('title', title)
       
-      // 🌟 關鍵：設定超高 z-index，讓它直接疊加蓋住原本會變色的動態站點
+      // 🌟 Key: Set super high z-index to overlay on top of dynamic stations that would change color
       marker.style.zIndex = '999999'
 
       const iconDiv = document.createElement('div')
 
       if (isStation) {
-        // 如果是旅程中的站點：顯示綠色大腳踏車 Icon (直接覆蓋在原站點上)
+        // If it's a station in the journey: display green bike icon (directly overlay on original station)
         iconDiv.className = 'relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-[#00A8E8] text-white shadow-[0_0_15px_rgba(0,0,0,0.3)]'
         iconDiv.innerHTML = `
           <svg viewBox="0 0 80 80" fill="currentColor" stroke="currentColor" stroke-width="2" class="h-6 w-6">
@@ -643,7 +643,7 @@ export default function Maps() {
           </svg>
         `
       } else {
-        // 如果是純起點/終點：顯示小紅點
+        // If pure start/end point: display small red dot
         iconDiv.className = 'h-5 w-5 rounded-full border-4 border-white bg-red-500 shadow-md'
       }
 
@@ -657,7 +657,7 @@ export default function Maps() {
     createMarker({ lat: route_info.end_station.coords.lat, lng: route_info.end_station.coords.lon }, route_info.end_station.name, true)
     createMarker({ lat: search_context.end_resolved.lat, lng: search_context.end_resolved.lon }, 'End', false)
 
-    // 缩放地图到包含所有路线点
+    // Zoom map to fit all route points
     const bounds = new google.maps.LatLngBounds()
     bounds.extend({ lat: search_context.start_resolved.lat, lng: search_context.start_resolved.lon })
     bounds.extend({ lat: route_info.start_station.coords.lat, lng: route_info.start_station.coords.lon })
@@ -720,7 +720,7 @@ export default function Maps() {
 
   return (
     <div className="relative w-full h-screen min-h-0">
-      {/* 地图铺满整个页面 */}
+      {/* Map fills the entire page */}
       <div className="absolute inset-0 z-0">
         {error ? (
           <div className="flex h-full items-center justify-center p-8">
@@ -737,11 +737,11 @@ export default function Maps() {
         )}
       </div>
 
-      {/* 左侧悬浮面板：站点 + 定位 + 天气合并 */}
+      {/* Left floating panel: station + location + weather combined */}
       <div
         className={`absolute top-24 left-4 bottom-10 z-20 w-72 pointer-events-auto rounded-2xl bg-white/90 backdrop-blur-sm shadow-lg p-4 flex flex-col overflow-visible transition-transform duration-300 ease-in-out ${panelOpen ? 'translate-x-0' : '-translate-x-[calc(100%+16px)]'}`}
       >
-        {/* 面板切换按钮 — 贴在面板右侧 */}
+        {/* Panel toggle button — attached to panel right side */}
         <button
           type="button"
           onClick={() => setPanelOpen((v) => !v)}
@@ -760,7 +760,7 @@ export default function Maps() {
           </svg>
         </button>
 
-        {/* 站点信息 */}
+        {/* Station info */}
         <div className="flex items-center gap-2 mb-3">
           <span className="text-sm font-semibold text-foreground">Maps</span>
           {stationsLoading && (
@@ -774,7 +774,7 @@ export default function Maps() {
           )}
         </div>
 
-        {/* 定位按钮 */}
+        {/* Locate button */}
         <button
           type="button"
           onClick={handleLocate}
@@ -813,10 +813,10 @@ export default function Maps() {
           <div className="mt-1.5 text-xs text-amber-600 text-center">{locationError}</div>
         )}
 
-        {/* 弹性占位 */}
+        {/* Flexible spacer */}
         <div className="flex-1 min-h-0" />
 
-        {/* 分割线 */}
+        {/* Divider line */}
         <div className="my-3 border-t border-gray-200/60" />
 
         {/* Journey Planner */}
@@ -861,39 +861,39 @@ export default function Maps() {
           </div>
         </div>
 
-        {/* 分割线 */}
+        {/* Divider line */}
         <div className="mb-3 border-t border-gray-200/60" />
 
-        {/* 天气 */}
+        {/* Weather */}
         <Weather />
       </div>
 
 
-      {/* 站點詳細資訊的彈出面板 (置中顯示) */}
+      {/* Station detail popup panel (centered display) */}
       {selectedStation && (
         <>
-          {/* 半透明黑色遮罩，點擊可關閉 */}
+          {/* Semi-transparent black overlay, click to close */}
           <div
             className="absolute inset-0 z-30 bg-black/20 backdrop-blur-sm"
             onClick={() => setSelectedStation(null)}
           />
 
-          {/* 置中的白色視窗 */}
+          {/* Centered white window */}
           <div className="absolute top-1/2 left-1/2 z-40 w-[90%] max-w-[460px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-2xl">
 
-            {/* 頂部標題與關閉按鈕 */}
+            {/* Top title and close button */}
             <div className="relative mb-6 flex items-center justify-center">
               <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                 {selectedStation.name}
-                {/* 狀態小圓點：載入中(閃爍灰) -> 沒資料(暗灰) -> 沒車(紅) -> 有車(綠) */}
+                {/* Status dot: loading (pulsing gray) -> no data (dark gray) -> no bikes (red) -> has bikes (green) */}
                 <span
                   className={`h-3.5 w-3.5 rounded-full shadow-sm ${detailLoading
-                    ? 'bg-gray-300 animate-pulse' // 載入中：淺灰色 + 呼吸燈動畫
-                    : !stationDetail
-                      ? 'bg-gray-400'               // API 失敗或無資料：暗灰色
-                      : stationDetail.available_bikes === 0
-                        ? 'bg-red-500'                // 確定沒車了：紅色
-                        : 'bg-[#a3c661]'              // 確定有車：綠色
+                    ? 'bg-gray-300 animate-pulse' // Loading: light gray + breathing animation
+                      : !stationDetail
+                        ? 'bg-gray-400'               // API failed or no data: dark gray
+                        : stationDetail.available_bikes === 0
+                          ? 'bg-red-500'                // Confirmed no bikes: red
+                          : 'bg-[#a3c661]'              // Confirmed has bikes: green
                     }`}
                 ></span>
               </h2>
@@ -907,7 +907,7 @@ export default function Maps() {
               </button>
             </div>
 
-            {/* 數據區塊 */}
+            {/* Data section */}
             <div className="mb-2 flex flex-col gap-3">
               {/* Bikes Available */}
               <div className="flex items-center rounded-xl border border-gray-400 py-3 px-5">
@@ -917,7 +917,7 @@ export default function Maps() {
                   </svg>
                 </div>
                 <div className="w-20 text-center text-[2.5rem] font-medium text-[#a3c661]">
-                  {/* 動態顯示資料，載入中顯示 -- */}
+                  {/* Dynamically display data, show -- when loading */}
                   {detailLoading ? '--' : (stationDetail?.available_bikes ?? '--')}
                 </div>
                 <div className="ml-4 text-xl text-gray-800">Bikes Available</div>
@@ -927,28 +927,28 @@ export default function Maps() {
               <div className="flex items-center rounded-xl border border-gray-400 py-3 px-5">
                 <div className="text-[2.2rem] font-bold text-black pl-1.5 pr-1">P</div>
                 <div className="w-20 text-center text-[2.5rem] font-medium text-[#f1c25f]">
-                  {/* 動態顯示資料，載入中顯示 -- */}
+                  {/* Dynamically display data, show -- when loading */}
                   {detailLoading ? '--' : (stationDetail?.available_bike_stands ?? '--')}
                 </div>
                 <div className="ml-4 text-xl text-gray-800">Stands Free</div>
               </div>
             </div>
 
-            {/* 更新時間 */}
+            {/* Update time */}
             <div className="mb-4 text-right text-xs text-gray-400 pr-1">
               {stationDetail?.last_update
                 ? `Updated: ${formatUpdateTime(stationDetail.last_update)}`
                 : 'Updated: --'}
             </div>
 
-            {/* 歷史圖表與預測區塊 */}
+            {/* History chart and prediction section */}
             <div className="overflow-hidden rounded-xl border border-gray-400">
               
-              {/* === 頂部切換區 === */}
-              <div className="flex flex-col bg-[#007EA7] text-white"> {/* 👈 更新為主題藍 */}
-                {/* 第一排：歷史 vs 預測 */}
+              {/* === Top toggle section === */}
+              <div className="flex flex-col bg-[#007EA7] text-white"> {/* 👈 Updated to theme blue */}
+                {/* First row: History vs Prediction */}
                 <div className="flex border-b border-white/20">
-                  {/* 左側：歷史紀錄分頁 */}
+                  {/* Left: History record tab */}
                   <button 
                     className={`flex-1 py-1.5 text-center text-sm transition-colors ${
                       timeRange === 'history' 
@@ -960,11 +960,11 @@ export default function Maps() {
                     Historic Data
                   </button>
                   
-                  {/* 右側：預測模型下拉分頁 */}
+                  {/* Right: Prediction model dropdown tab */}
                   <div 
                     className={`flex-1 relative flex items-center transition-colors ${
                       timeRange !== 'history' 
-                        ? 'bg-white text-[#007EA7] font-bold' // 預測維持紫色，保持未來感
+                        ? 'bg-white text-[#007EA7] font-bold' // Prediction keeps purple, maintaining futuristic feel
                         : 'text-white hover:bg-black/10'      
                     }`}
                   >
@@ -983,7 +983,7 @@ export default function Maps() {
                   </div>
                 </div>
 
-                {/* 第二排：歷史範圍切換 (只有在選擇 History 時出現) */}
+                {/* Second row: History range toggle (only appears when History is selected) */}
                 {timeRange === 'history' && (
                   <div className="flex text-xs bg-black/10">
                     {(['4h', '1d'] as const).map((range) => (
@@ -992,7 +992,7 @@ export default function Maps() {
                         onClick={() => setHistoryRange(range)}
                         className={`flex-1 py-1.5 transition-colors border-r border-white/10 last:border-r-0 ${
                           historyRange === range 
-                            ? 'bg-white text-[#007EA7] font-bold shadow-inner' // 👈 啟用按鈕的文字更新為主題藍
+                            ? 'bg-white text-[#007EA7] font-bold shadow-inner' // 👈 Active button text updated to theme blue
                             : 'hover:bg-white/10 text-white/80'
                         }`}
                       >
@@ -1003,7 +1003,7 @@ export default function Maps() {
                 )}
               </div>
 
-              {/* === 圖表渲染區 === */}
+              {/* === Chart render area === */}
               <div className="h-56 w-full bg-white p-2">
                 {chartLoading ? (
                   <div className="flex h-full w-full items-center justify-center text-gray-400 text-sm">
@@ -1018,7 +1018,7 @@ export default function Maps() {
                     >
                       <defs>
                         <linearGradient id="colorBikes" x1="0" y1="0" x2="0" y2="1">
-                          {/* 👈 歷史圖表的漸層色更新為主題藍 */}
+                          {/* 👈 History chart gradient color updated to theme blue */}
                           <stop offset="5%" stopColor="#007EA7" stopOpacity={0.8} />
                           <stop offset="95%" stopColor="#007EA7" stopOpacity={0} />
                         </linearGradient>
@@ -1075,7 +1075,7 @@ export default function Maps() {
         </>
       )}
 
-      {/* Maps 页专用：小固定 footer */}
+      {/* Maps page specific: small fixed footer */}
       <footer className="fixed bottom-0 left-0 right-0 z-10 border-t border-border/50 bg-background/95 py-2 px-4 text-center text-xs text-muted-foreground backdrop-blur sm:px-6">
         © 2026 UCDSE. All rights reserved. Built with using React + Vite + Tailwind
       </footer>

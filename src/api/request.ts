@@ -233,7 +233,7 @@ request.interceptors.response.use(
     const originalRequest = error.config as RetryableRequest | undefined
     const status = error.response?.status
 
-    // 401/403 且非登录/注册接口：尝试刷新 token 后重试
+    // 401/403 and not login/register endpoint: try refresh token then retry
     if (
       (status === 401 || status === 403) &&
       originalRequest &&
@@ -273,7 +273,7 @@ request.interceptors.response.use(
       }
     }
 
-    // 其他错误：统一提示并 reject
+    // Other errors: unified toast and reject
     const message = extractErrorMessage(error, NETWORK_ERROR_MESSAGE)
     toast.error(message)
     return Promise.reject(new Error(message))
@@ -282,5 +282,5 @@ request.interceptors.response.use(
 
 export default request
 
-/** 供非 axios 请求（如 SSE）使用：先取当前 access_token，若无则用 refresh_token 静默刷新后返回 */
+/** For non-axios requests (like SSE): first get current access_token, if none then silent refresh with refresh_token and return */
 export { resolveAccessToken, refreshAccessToken }

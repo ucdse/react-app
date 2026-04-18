@@ -1,21 +1,21 @@
-# 构建阶段
+# Build stage
 FROM node:24-alpine AS builder
 
 WORKDIR /app
 
-# 复制 package 文件
+# Copy package files
 COPY package.json package-lock.json ./
 
-# 安装依赖
+# Install dependencies
 RUN npm ci
 
-# 复制源代码（.env 由 Jenkins 通过 build secret 注入，不放入镜像）
+# Copy source code (.env injected by Jenkins via build secret, not put into image)
 COPY . .
 
-# 构建应用：env 以 secret 挂载，仅构建时可见，不写入镜像层
+# Build app: env mounted as secret, only visible during build, not written to image layer
 RUN --mount=type=secret,id=env,target=/app/.env npm run build
 
-# 运行阶段
+# Runtime stage
 FROM nginx:1.25-alpine
 
 RUN apk add --no-cache gettext
@@ -23,16 +23,16 @@ RUN apk add --no-cache gettext
 ENV BACKEND_HOST=flask-app
 ENV BACKEND_PORT=5000
 
-# 复制构建产物到 nginx 目录
+# Copy build output to nginx directory
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# 复制 nginx 模板与自定义入口脚本（参考 firmament-take-out-admin）
+# Copy nginx template and custom entrypoint script (referencing firmament-take-out-admin)
 COPY deploy/nginx/admin.conf.tpl /etc/nginx/templates/default.conf.template
 COPY deploy/nginx/docker-entrypoint.d/99-envsubst.sh /docker-entrypoint.d/99-envsubst.sh
 RUN chmod +x /docker-entrypoint.d/99-envsubst.sh
 
-# 暴露端口
+# Expose port
 EXPOSE 80
 
-# 启动 nginx
+# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
