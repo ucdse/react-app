@@ -16,27 +16,28 @@
 
 ---
 
-## Table of Contents
+## 📋 Table of Contents
 
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Configuration](#configuration)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
-- [Docker Deployment](#docker-deployment)
-- [Available Scripts](#available-scripts)
-- [ESLint Configuration](#eslint-configuration)
-- [React Compiler](#react-compiler)
-- [Contributing](#contributing)
-- [License](#license)
-- [Contact](#contact)
+- [✨ Features](#-features)
+- [🛠️ Tech Stack](#️-tech-stack)
+- [🚀 Getting Started](#-getting-started)
+  - [🔧 Prerequisites](#-prerequisites)
+  - [📥 Installation](#-installation)
+  - [⚙️ Configuration](#️-configuration)
+- [💻 Usage](#-usage)
+- [📁 Project Structure](#-project-structure)
+- [🐳 Docker Deployment](#-docker-deployment)
+- [📜 Available Scripts](#-available-scripts)
+- [🔍 ESLint Configuration](#-eslint-configuration)
+- [⚛️ React Compiler](#️-react-compiler)
+- [🧪 Testing](#-testing)
+- [🤝 Contributing](#-contributing)
+- [📝 License](#-license)
+- [📧 Contact](#-contact)
 
 ---
 
-## Features
+## ✨ Features
 
 - **AI-Powered Chat** — Interactive chat interface with streaming AI responses
 - **Interactive Maps** — Google Maps integration with location-based features
@@ -50,7 +51,7 @@
 
 ---
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 | Category | Technology | Version |
 |----------|-----------|---------|
@@ -68,16 +69,16 @@
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
-### Prerequisites
+### 🔧 Prerequisites
 
 - **Node.js**: 18.x or higher (check with `node -v`)
 - **npm** (comes with Node.js) or **pnpm** / **yarn**
 - **Git**: For cloning the repository
 - **Docker** (optional): For containerized deployment
 
-### Installation
+### 📥 Installation
 
 1. **Clone the repository:**
 
@@ -102,7 +103,7 @@
 
    The app will be available at `http://localhost:5173`. With `--host` enabled, you can also access it from other devices on the same network using your machine's IP address.
 
-### Configuration
+### ⚙️ Configuration
 
 Create a `.env` file in the project root by copying the example:
 
@@ -121,7 +122,7 @@ Then fill in your API keys:
 
 ---
 
-## Usage
+## 💻 Usage
 
 After starting the development server, you can navigate through the following pages:
 
@@ -139,7 +140,7 @@ After starting the development server, you can navigate through the following pa
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 react-app/
@@ -175,7 +176,7 @@ react-app/
 
 ---
 
-## Docker Deployment
+## 🐳 Docker Deployment
 
 The project includes a production-ready Docker setup using a multi-stage build:
 
@@ -206,7 +207,7 @@ The Nginx configuration uses `envsubst` to dynamically proxy API requests to the
 
 ---
 
-## Available Scripts
+## 📜 Available Scripts
 
 | Command | Description |
 |---------|-------------|
@@ -217,7 +218,7 @@ The Nginx configuration uses `envsubst` to dynamically proxy API requests to the
 
 ---
 
-## ESLint Configuration
+## 🔍 ESLint Configuration
 
 The project uses ESLint with the following plugins:
 
@@ -297,13 +298,45 @@ For additional React-specific rules, install:
 
 ---
 
-## React Compiler
+## ⚛️ React Compiler
 
 The React Compiler is **not enabled** by default in this template due to its impact on development and build performance. To enable it, refer to the [React Compiler installation guide](https://react.dev/learn/react-compiler/installation).
 
 ---
 
-## Contributing
+## 🧪 Testing
+
+This project currently uses **ESLint** for static code analysis (`npm run lint`), but does not yet have a dedicated unit or integration test framework configured.
+
+### Lint Checks
+
+```bash
+# Run ESLint to check for code quality issues
+npm run lint
+```
+
+### Build Verification
+
+```bash
+# TypeScript check + production build (serves as a type-safety test)
+npm run build
+```
+
+### Adding a Test Framework
+
+To add testing support, consider one of the following:
+
+| Framework | Description |
+|-----------|-------------|
+| [Vitest](https://vitest.dev/) | Vite-native test runner, fast and ESM-first (recommended) |
+| [Jest](https://jestjs.io/) | Industry-standard JavaScript testing framework |
+| [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) | Component-level testing for React UI |
+
+> **Tip:** Vitest is the recommended choice for Vite-based projects due to its shared configuration and instant startup.
+
+---
+
+## 🤝 Contributing
 
 Contributions are welcome! To contribute:
 
@@ -326,17 +359,17 @@ Please ensure your code passes `npm run lint` and `npm run build` before submitt
 
 ---
 
-## License
+## 📝 License
 
 This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
 
 ---
 
-## Contact
+## 📧 Contact
 
 - **GitHub**: [ucdse/react-app](https://github.com/ucdse/react-app)
 - **Issues**: [Open an Issue](https://github.com/ucdse/react-app/issues)
 
 ---
 
-Made with care by the UCD SE team.
+Made with ❤️ by the UCD SE team.
